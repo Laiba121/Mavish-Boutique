@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --rose: #e11d48;
+  --rose-light: #fecdd3;
+  --gold: #c9a84c;
+  --dark: #1a1a1a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Lato', sans-serif;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Announcement ticker */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker 25s linear infinite;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #e11d48; border-radius: 3px; }
+
+/* Product card hover */
+.product-img-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+.product-img-hover {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.product-img-wrapper:hover .product-img-hover {
+  opacity: 1;
+}
+.product-img-main {
+  transition: opacity 0.4s ease;
+}
+.product-img-wrapper:hover .product-img-main {
+  opacity: 0;
+}
