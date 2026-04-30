@@ -180,7 +180,7 @@ function ExpandedNavbar({ cartCount, user, dispatch, navigate, searchQuery, setS
 
         {/* LOGO */}
         <Link to="/">
-          <img src="/images/logo.avif" alt="logo" className="h-[80px]" />
+          <img src="/images/logo1.png" alt="logo" className="h-[80px]" />
         </Link>
 
         {/* RIGHT SIDE */}

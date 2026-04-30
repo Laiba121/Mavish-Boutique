@@ -15,34 +15,62 @@ import {
 /* ── Google One‑Tap script loader ─────────────────────────────────────── */
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
+const GOOGLE_SCRIPT_ID = 'google-identity-script';
+
+function initializeGoogleButton(buttonId, onCredential) {
+  if (!window.google?.accounts?.id) return;
+
+  if (!window.__googleIdentityInitialized) {
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: onCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+    });
+    window.__googleIdentityInitialized = true;
+  }
+
+  const button = document.getElementById(buttonId);
+  if (button) {
+    window.google.accounts.id.renderButton(button, {
+      theme: 'outline',
+      size: 'large',
+      width: 320,
+      text: 'signin_with',
+      shape: 'rectangular',
+      logo_alignment: 'left',
+    });
+  }
+}
+
 function useGoogleScript(onCredential) {
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
+
+    const setup = () => initializeGoogleButton('google-btn-login', onCredential);
+    const existingScript = document.getElementById(GOOGLE_SCRIPT_ID);
+
+    if (window.google?.accounts?.id) {
+      setup();
+      return;
+    }
+
+    if (existingScript) {
+      existingScript.addEventListener('load', setup);
+      return () => existingScript.removeEventListener('load', setup);
+    }
+
     const script = document.createElement('script');
+    script.id = GOOGLE_SCRIPT_ID;
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      window.google?.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: onCredential,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      window.google?.accounts.id.renderButton(
-        document.getElementById('google-btn-login'),
-        {
-          theme: 'outline',
-          size: 'large',
-          width: 320,
-          text: 'signin_with',
-          shape: 'rectangular',
-          logo_alignment: 'left',
-        }
-      );
-    };
+    script.onload = setup;
     document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
+
+    return () => {
+      if (!existingScript) document.body.removeChild(script);
+    };
   }, [onCredential]);
 }
 

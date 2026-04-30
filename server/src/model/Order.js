@@ -8,18 +8,30 @@ const orderSchema = new mongoose.Schema({
     price: Number,
     quantity: Number,
     size: String,
+    color: String,
+    customizations: [{
+      title: String,
+      value: String,
+      price: Number
+    }],
     image: String
   }],
   shippingAddress: {
     fullName: String,
     address: String,
     city: String,
-    phone: String
+    phone: String,
+    email: String
   },
   totalAmount: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'pending' },
-  paymentMethod: { type: String, default: 'COD' },
-  createdAt: { type: Date, default: Date.now }
+  status: { type: String, enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], default: 'pending' },
+  paymentMethod: { type: String, enum: ['COD', 'JazzCash'], default: 'COD' },
+  paymentStatus: { type: String, enum: ['paid', 'pending'], default: 'pending' },
+  courierName: { type: String },
+  trackingID: { type: String },
+  deliveryCharges: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 export default mongoose.model('Order', orderSchema);

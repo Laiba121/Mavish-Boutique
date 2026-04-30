@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
 
-const slides = [
+const FALLBACK_SLIDES = [
   {
     id: 1,
     image: 'https://images.unsplash.com/photo-1617627143233-95c86f4a6e1e?w=1600&q=90',
@@ -34,12 +35,38 @@ const slides = [
   },
 ];
 
+const mapBannerToSlide = (banner) => ({
+  id: banner._id,
+  image: banner.image,
+  title: banner.title || 'New Collection',
+  subtitle: banner.subtitle || 'Discover the latest styles',
+  cta: banner.buttonText || 'Shop Now',
+  link: banner.buttonLink || '/whats-new',
+  overlay: 'from-black/60 via-black/20 to-transparent',
+  textSide: 'left',
+});
+
 export default function HeroBanner() {
+  const [slides, setSlides] = useState(FALLBACK_SLIDES);
   const [current, setCurrent] = useState(0);
 
   const goTo = (index) => {
     setCurrent(index);
   };
+
+  useEffect(() => {
+    api.get('/products/banners')
+      .then((res) => {
+        const banners = Array.isArray(res.data) ? res.data : [];
+        if (banners.length > 0) {
+          setSlides(banners.map(mapBannerToSlide));
+          setCurrent(0);
+        }
+      })
+      .catch(() => {
+        // fallback slides remain in place
+      });
+  }, []);
 
   // ✅ Auto scroll
   useEffect(() => {
@@ -48,7 +75,7 @@ export default function HeroBanner() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [slides.length]);
 
   const slide = slides[current];
 

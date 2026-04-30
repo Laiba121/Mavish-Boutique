@@ -4,12 +4,24 @@ import { useSelector } from 'react-redux';
 import { selectUser } from './store/authSlice';
 
 // Pages
-import Home from "./pages/Home";
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import VerifyEmailPage from './pages/VerifyEmailPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import Dashboard from './pages/admin/Dashboard';
+import Home from "./Pages/Home";
+import LoginPage from './Pages/LoginPage';
+import RegisterPage from './Pages/RegisterPage';
+import VerifyEmailPage from './Pages/VerifyEmailPage';
+import ForgotPasswordPage from './Pages/ForgotPasswordPage';
+import Dashboard from './Pages/admin/Dashboard';
+import ProductsAdmin from './Pages/admin/ProductsAdmin';
+import CategoriesAdmin from './Pages/admin/CategoriesAdmin';
+import OrdersAdmin from './Pages/admin/OrdersAdmin';
+import CustomersAdmin from './Pages/admin/CustomersAdmin';
+import ReviewsAdmin from './Pages/admin/ReviewsAdmin';
+import CouponsAdmin from './Pages/admin/CouponsAdmin';
+import CustomizationsAdmin from './Pages/admin/CustomizationsAdmin';
+import BannersAdmin from './Pages/admin/BannersAdmin'; 
+import PagesAdmin from './Pages/admin/PagesAdmin';
+import ContactsAdmin from './Pages/admin/ContactsAdmin';
+import SettingsAdmin from './Pages/admin/SettingsAdmin';
+import ProductDetail from './Pages/ProductDetail';
 
 // ✅ Import ProtectedRoute
 import ProtectedRoute from './components/ProtectedRoutes';
@@ -65,6 +77,107 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/admin/products"
+          element={
+            <ProtectedRoute adminOnly>
+              <ProductsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/categories"
+          element={
+            <ProtectedRoute adminOnly>
+              <CategoriesAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute adminOnly>
+              <OrdersAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/customers"
+          element={
+            <ProtectedRoute adminOnly>
+              <CustomersAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/reviews"
+          element={
+            <ProtectedRoute adminOnly>
+              <ReviewsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/coupons"
+          element={
+            <ProtectedRoute adminOnly>
+              <CouponsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/customizations"
+          element={
+            <ProtectedRoute adminOnly>
+              <CustomizationsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/banners"
+          element={
+            <ProtectedRoute adminOnly>
+              <BannersAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/pages"
+          element={
+            <ProtectedRoute adminOnly>
+              <PagesAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/contacts"
+          element={
+            <ProtectedRoute adminOnly>
+              <ContactsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute adminOnly>
+              <SettingsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/product/:id" element={<ProductDetail />} />
 
         {/* redirect /admin */}
         <Route
