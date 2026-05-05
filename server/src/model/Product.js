@@ -45,11 +45,18 @@ const productSchema = new mongoose.Schema({
   isSale: { type: Boolean, default: false },
   salePrice: { type: Number },
   productCollection: { type: String },
+  tags: [{ type: String }],
+  fabric: { type: String },
+  color: { type: String },
+  availableSizes: [{ type: String }],
+  makingTime: { type: String, default: '3 - 4 Weeks' },
+  careInstructions: [{ type: String }],
+  disclaimer: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
-productSchema.pre('save', async function (next) {
+productSchema.pre('save', async function () {
   if (!this.slug && this.name) {
     const baseSlug = slugify(this.name);
     let slug = baseSlug;
@@ -62,7 +69,38 @@ productSchema.pre('save', async function (next) {
 
     this.slug = slug;
   }
-  next();
+});
+
+productSchema.pre('findOneAndUpdate', async function () {
+  const update = this.getUpdate();
+  if (!update) return;
+
+  const name = update.name;
+  const slug = update.slug;
+
+  if (name && !slug) {
+    const baseSlug = slugify(name);
+    let newSlug = baseSlug;
+    let suffix = 0;
+
+    const query = this.getQuery();
+    const excludeId = query?._id;
+
+    while (
+      await mongoose.models.Product.exists({
+        slug: newSlug,
+        _id: { $ne: excludeId }
+      })
+    ) {
+      suffix++;
+      newSlug = `${baseSlug}-${suffix}`;
+    }
+
+    this.setUpdate({
+      ...update,
+      slug: newSlug
+    });
+  }
 });
 
 export default mongoose.model('Product', productSchema);

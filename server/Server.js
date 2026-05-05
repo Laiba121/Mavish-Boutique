@@ -2,34 +2,135 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+
+// ROUTES
 import authRoutes from './src/routes/Auth.js';
-import productRoutes from './src/routes/Products.js';
 import orderRoutes from './src/routes/Orders.js';
-import adminRoutes from './src/routes/Admin.js';
+import adminBanner from './src/routes/admin/Banner.js'; // ✅ FIXED (MISSING BEFORE)
+import userBanner from './src/routes/user/Banner.js';   // ✅ PUBLIC ROUTES (banners etc.)
+import adminCategory from './src/routes/admin/Category.js'; // ✅ FIXED (MISSING BEFORE)
+import userCategory from './src/routes/user/Category.js';   // ✅ PUBLIC ROUTES (categories etc.)
+import uploadProduct from "./src/routes/admin/uploadProduct.js";
+import uploadCategory from "./src/routes/admin/uploadCategory.js";
+import adminProduct from "./src/routes/admin/Product.js";
+import userProduct from "./src/routes/user/Product.js";
+import checkoutRouter from './src/routes/checkout.js';
+
+
+
+import Product from './src/model/Product.js';
 
 dotenv.config();
 
 const app = express();
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-app.use(express.json());
+// ================== FILE UPLOAD FOLDER ==================
+const uploadsDir = path.join(process.cwd(), 'uploads');
 
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// ================== MIDDLEWARE ==================
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
+
+app.use('/uploads', express.static(uploadsDir));
+
+// ================== ROUTES ==================
 app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin', adminRoutes);
 
-app.get('/api/health', (_, res) => res.json({ status: 'ok', message: 'Mehrma Boutique API' }));
+// ✅ ADMIN ROUTES
+app.use('/api/admin/banners', adminBanner);// ADMIN
+app.use('/api/admin/categories', adminCategory);
 
+app.use("/api/admin/upload/products", uploadProduct);
+app.use("/api/admin/upload/categories", uploadCategory);
+
+// ADMIN
+app.use("/api/admin/products", adminProduct);
+
+// USER
+app.use("/api/products", userProduct);
+app.use('/api/checkout', checkoutRouter);
+
+
+// ✅ PUBLIC ROUTES (IMPORTANT FOR HERO BANNER)
+app.use('/api/banners', userBanner);
+app.use('/api/categories', userCategory);
+
+// ================== HEALTH CHECK ==================
+app.get('/api/health', (_, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Mehrma Boutique API running'
+  });
+});
+
+// ================== SLUG GENERATOR ==================
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+const ensureProductSlugs = async () => {
+  const products = await Product.find({
+    $or: [
+      { slug: { $exists: false } },
+      { slug: null },
+      { slug: '' }
+    ]
+  });
+
+  if (!products.length) return;
+
+  for (const product of products) {
+    const baseSlug = slugify(product.name || `product-${product._id}`);
+    let slug = baseSlug;
+    let suffix = 0;
+
+    while (await Product.exists({ slug, _id: { $ne: product._id } })) {
+      suffix++;
+      slug = `${baseSlug}-${suffix}`;
+    }
+
+    product.slug = slug;
+    await product.save();
+
+    console.log(`✅ Slug generated: ${slug}`);
+  }
+};
+
+// ================== DATABASE CONNECT ==================
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/mehrma';
+const MONGO_URI =
+  process.env.MONGO_URI || 'mongodb://localhost:27017/mehrma';
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
+mongoose
+  .connect(MONGO_URI)
+  .then(async () => {
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+
+    await ensureProductSlugs();
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('❌ MongoDB error:', err.message);
     process.exit(1);
   });

@@ -8,47 +8,77 @@ export default function CategoriesAdmin() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     status: 'active'
   });
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  const [imageFile, setImageFile] = useState(null);
 
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get('/admin/categories');
-      setCategories(Array.isArray(res.data) ? res.data : []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+ useEffect(() => {
+  fetchCategories();
+}, []);
+
+const fetchCategories = async () => {
+  try {
+    const res = await api.get('/admin/categories');
+    setCategories(Array.isArray(res.data) ? res.data : []);
+  } catch (error) {
+    console.error(error);
+    setCategories([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      if (editingCategory) {
-        await api.put(`/admin/categories/${editingCategory._id}`, formData);
-      } else {
-        await api.post('/admin/categories', formData);
+      let imageUrl = editingCategory?.image || '';
+
+      // Upload image if new one selected
+      if (imageFile) {
+        const formDataImg = new FormData();
+        formDataImg.append('image', imageFile);
+
+        const uploadRes = await api.post('/admin/upload/categories', formDataImg, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        imageUrl = uploadRes.data.image;
       }
+
+      const finalData = {
+        ...formData,
+        image: imageUrl
+      };
+
+      if (editingCategory) {
+        await api.put(`/admin/categories/${editingCategory._id}`, finalData);
+      } else {
+        await api.post('/admin/categories', finalData);
+      }
+
       fetchCategories();
-      setShowForm(false);
-      setEditingCategory(null);
-      setFormData({
-        name: '',
-        slug: '',
-        status: 'active'
-      });
+      resetForm();
+
     } catch (error) {
       console.error('Error saving category:', error);
     }
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingCategory(null);
+    setFormData({
+      name: '',
+      slug: '',
+      status: 'active'
+    });
+    setImageFile(null);
   };
 
   const handleEdit = (category) => {
@@ -62,146 +92,156 @@ export default function CategoriesAdmin() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
+    if (window.confirm('Delete this category?')) {
       try {
         await api.delete(`/admin/categories/${id}`);
         fetchCategories();
       } catch (error) {
-        console.error('Error deleting category:', error);
+        console.error('Delete error:', error);
       }
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-screen bg-gray-100">
-        <Sidebar />
-        <div className="flex-1 flex flex-col">
-          <Topbar />
-          <div className="p-6">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Topbar />
+
         <div className="p-6 overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-semibold text-gray-800">Categories</h1>
+
+          {/* HEADER */}
+          <div className="flex justify-between mb-4">
+            <h1 className="text-2xl font-semibold">Categories</h1>
             <button
               onClick={() => setShowForm(true)}
-              className="bg-[#1a1208] text-white px-4 py-2 rounded hover:bg-[#2a2018]"
+              className="bg-black text-white px-4 py-2 rounded"
             >
               Add Category
             </button>
           </div>
 
+          {/* FORM */}
           {showForm && (
             <div className="bg-white p-6 rounded shadow mb-6">
-              <h2 className="text-xl font-semibold mb-4">
-                {editingCategory ? 'Edit Category' : 'Add Category'}
+              <h2 className="text-xl mb-4">
+                {editingCategory ? 'Edit' : 'Add'} Category
               </h2>
+
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full p-2 border rounded"
-                    required
+
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      name: e.target.value,
+                      slug: e.target.value.toLowerCase().replace(/\s+/g, '-')
+                    })
+                  }
+                  className="w-full p-2 border rounded"
+                  required
+                />
+
+                <input
+                  type="text"
+                  placeholder="Slug"
+                  value={formData.slug}
+                  onChange={(e) =>
+                    setFormData({ ...formData, slug: e.target.value })
+                  }
+                  className="w-full p-2 border rounded"
+                  required
+                />
+
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value })
+                  }
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+
+                {/* IMAGE */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  className="w-full"
+                />
+
+                {/* PREVIEW */}
+                {editingCategory?.image && !imageFile && (
+                  <img
+                    src={editingCategory.image}
+                    className="w-20 h-20 object-cover rounded"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Slug</label>
-                  <input
-                    type="text"
-                    value={formData.slug}
-                    onChange={(e) => setFormData({...formData, slug: e.target.value})}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
+                )}
+
                 <div className="flex gap-2">
-                  <button type="submit" className="bg-[#1a1208] text-white px-4 py-2 rounded">
-                    {editingCategory ? 'Update' : 'Create'}
+                  <button className="bg-black text-white px-4 py-2 rounded">
+                    Save
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingCategory(null);
-                      setFormData({
-                        name: '',
-                        slug: '',
-                        status: 'active'
-                      });
-                    }}
+                    onClick={resetForm}
                     className="bg-gray-500 text-white px-4 py-2 rounded"
                   >
                     Cancel
                   </button>
                 </div>
+
               </form>
             </div>
           )}
 
-          <div className="bg-white rounded shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-2 text-left">Name</th>
-                  <th className="px-4 py-2 text-left">Slug</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                  <th className="px-4 py-2 text-left">Actions</th>
+          {/* TABLE */}
+          <table className="w-full bg-white rounded shadow">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-2">Image</th>
+                <th className="p-2">Name</th>
+                <th className="p-2">Slug</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {categories.map((cat) => (
+                <tr key={cat._id} className="border-t text-center">
+                  <td className="p-2">
+                    {cat.image ? (
+                      <img
+                        src={cat.image}
+                        className="w-12 h-12 object-cover mx-auto rounded"
+                      />
+                    ) : 'No Image'}
+                  </td>
+                  <td>{cat.name}</td>
+                  <td>{cat.slug}</td>
+                  <td>{cat.status}</td>
+                  <td>
+                    <button onClick={() => handleEdit(cat)}>Edit</button>
+                    <button
+                      onClick={() => handleDelete(cat._id)}
+                      className="ml-2 text-red-600"
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {categories.map((category) => (
-                  <tr key={category._id} className="border-t">
-                    <td className="px-4 py-2">{category.name}</td>
-                    <td className="px-4 py-2">{category.slug}</td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        category.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {category.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => handleEdit(category)}
-                        className="text-blue-600 hover:text-blue-800 mr-2"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category._id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
+
         </div>
       </div>
     </div>

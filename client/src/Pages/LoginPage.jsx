@@ -152,7 +152,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-full border border-pink-300 flex items-center justify-center bg-white/50">
               <span className="text-pink-600 font-serif text-lg font-bold">M</span>
             </div>
-            <span className="font-serif text-gray-800 text-xl tracking-widest">MEHRMA</span>
+            <span className="font-serif text-gray-800 text-xl tracking-widest">MAVISH</span>
           </Link>
 
           {/* Center content */}
@@ -170,7 +170,7 @@ export default function LoginPage() {
 
           {/* Bottom quote */}
           <p className="text-gray-400 text-xs tracking-widest text-center uppercase">
-            Mehrma Boutique · Est. 2020
+            Mavish Boutique · Est. 2020
           </p>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function LoginPage() {
               <div className="w-8 h-8 rounded-full border border-pink-300 flex items-center justify-center bg-white/50">
                 <span className="text-pink-600 font-serif font-bold">M</span>
               </div>
-              <span className="font-serif text-gray-800 text-lg tracking-widest">MEHRMA</span>
+              <span className="font-serif text-gray-800 text-lg tracking-widest">MAVISH</span>
             </Link>
           </div>
 

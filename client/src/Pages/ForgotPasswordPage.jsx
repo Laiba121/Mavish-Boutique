@@ -141,7 +141,7 @@ export default function ForgotPasswordPage() {
             <div className="w-9 h-9 rounded-full border border-primary flex items-center justify-center">
               <span className="text-primary font-serif text-base font-bold">M</span>
             </div>
-            <span className="font-serif text-secondary text-xl tracking-widest">MEHRMA</span>
+            <span className="font-serif text-secondary text-xl tracking-widest">MAVISH</span>
           </Link>
         </div>
 

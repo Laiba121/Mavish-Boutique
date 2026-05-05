@@ -37,8 +37,8 @@ export default function Footer() {
             <p>Qila Marriage Hall, Qila Didar Singh,</p>
             <p>Gujranwala</p>
             <p>
-              <a href="mailto:customercare@swocclothing.com" className="transition-colors hover:text-white">
-                Customercare@Swocclothing.Com
+              <a href="mailto:customercare@mavish.com" className="transition-colors hover:text-white">
+                Customercare@Mavish.com
               </a>
             </p>
             <p>+92 300 100 3187 (WhatsApp Chat</p>
@@ -122,7 +122,7 @@ export default function Footer() {
       <div className="border-t border-[#2d2d2d]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-4 sm:px-8 md:flex-row">
           <p className="font-body text-[12px] font-semibold tracking-[0.02em] text-white">
-            Copyright © Swocclothing | All rights reserved.
+            Copyright © Mavish Boutique | All rights reserved.
           </p>
 
           <div className="flex items-center gap-5">

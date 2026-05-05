@@ -5,49 +5,52 @@ import api from '../utils/api';
 const FALLBACK_CATEGORIES = [
   {
     _id: '1',
-    name: 'Girls',
-    image: 'https://images.unsplash.com/photo-1617627143233-95c86f4a6e1e?w=500&q=80',
+    name: 'Boys',
+    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=700&q=80',
     comingSoon: false,
   },
   {
     _id: '2',
-    name: 'Women',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
+    name: 'Girls',
+    image: 'https://images.unsplash.com/photo-1617627143233-95c86f4a6e1e?w=700&q=80',
     comingSoon: false,
   },
   {
     _id: '3',
-    name: 'Boys',
-    image: null,
-    comingSoon: true,
+    name: 'Men',
+    image: 'https://images.unsplash.com/photo-1495121605193-b116b5b9c5d9?w=700&q=80',
+    comingSoon: false,
   },
   {
     _id: '4',
-    name: 'Men',
-    image: null,
-    comingSoon: true,
+    name: 'Women',
+    image: 'https://images.unsplash.com/photo-1564836235481-71ce9728b7d0?w=700&q=80',
+    comingSoon: false,
   },
 ];
 
 export default function ShopByCategory() {
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
 
-  useEffect(() => {
-    api.get('/products/categories')
-      .then(res => {
-        const data = Array.isArray(res.data) ? res.data : [];
-        if (data.length > 0) {
-          setCategories(data.map(cat => ({
+ useEffect(() => {
+  api.get('/categories')
+    .then(res => {
+      const data = Array.isArray(res.data) ? res.data : [];
+
+      if (data.length > 0) {
+        setCategories(
+          data.map(cat => ({
             ...cat,
             link: `/category/${cat.slug || cat._id}`,
             comingSoon: false,
-          })));
-        }
-      })
-      .catch(err => {
-        console.warn('Failed to fetch categories, using fallback:', err);
-      });
-  }, []);
+          }))
+        );
+      }
+    })
+    .catch(err => {
+      console.warn('Failed to fetch categories:', err);
+    });
+}, []);
 
   return (
     <section className="py-16 px-6 lg:px-16 bg-rose-50/40">

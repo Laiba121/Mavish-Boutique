@@ -182,7 +182,7 @@ export default function RegisterPage() {
             <div className="w-9 h-9 rounded-full border border-pink-300 flex items-center justify-center bg-white/50">
               <span className="text-pink-600 font-serif text-base font-bold">M</span>
             </div>
-            <span className="font-serif text-gray-800 text-lg tracking-[4px]">MEHRMA</span>
+            <span className="font-serif text-gray-800 text-lg tracking-[4px]">MAVISH</span>
           </Link>
 
           <div>
@@ -204,7 +204,7 @@ export default function RegisterPage() {
           </div>
 
           <p className="text-gray-400 text-xs tracking-widest uppercase">
-            Mehrma Boutique · Gujranwala
+            Mavish Boutique · Gujranwala
           </p>
         </div>
       </div>
@@ -219,7 +219,7 @@ export default function RegisterPage() {
               <div className="w-8 h-8 rounded-full border border-pink-300 flex items-center justify-center bg-white/50">
                 <span className="text-pink-600 font-serif font-bold">M</span>
               </div>
-              <span className="font-serif text-gray-800 text-lg tracking-widest">MEHRMA</span>
+              <span className="font-serif text-gray-800 text-lg tracking-widest">MAVISH</span>
             </Link>
           </div>
 

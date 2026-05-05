@@ -1,14 +1,17 @@
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: "http://localhost:5000/api", // ✅ FIXED
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem('mehrma_user') || 'null');
+  const user = JSON.parse(localStorage.getItem("mavish_user") || "null");
+
   if (user?.token) {
     config.headers.Authorization = `Bearer ${user.token}`;
   }
+
   return config;
 });
 

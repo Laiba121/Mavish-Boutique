@@ -5,13 +5,15 @@ import { ChevronRight, Grid2X2, Home, Menu, Search, ShoppingBag, User, UserPlus,
 import { toggleCart } from "../store/cartSlice";
 import { logout } from "../store/authSlice";
 import AnnouncementBar from "./AnnouncementBar";
+import CartSidebar from "./CartSidebar";
 
 const navLinks = [
-  { label: "Sale", path: "/sale" },
-  { label: "What's New", path: "/whats-new" },
-  { label: "Boys", path: "/boys" },
-  { label: "Girls", path: "/girls" },
-  { label: "Accessories", path: "/accessories" },
+  { label: 'Sale', path: '/sale' },
+  { label: "What's New", path: '/whats-new' },
+  { label: 'Boys', path: '/boys' },
+  { label: 'Girls', path: '/girls' },
+  { label: 'Men', path: '/men' },
+  { label: 'Women', path: '/women' },
 ];
 
 const trendingTags = ["eid", "boys", "girls", "wool", "summer", "farshi", "festive"];
@@ -176,7 +178,7 @@ function SearchOverlay({ searchQuery, setSearchQuery, handleSearch, navigate, on
 function ExpandedNavbar({ cartCount, user, dispatch, navigate, searchQuery, setSearchQuery, handleSearch, userMenuOpen, setUserMenuOpen, searchFocused, setSearchFocused, searchRef }) {
   return (
     <div className="bg-white">
-      <div className="max-w-7xl mx-auto flex px-3 items-center justify-between h-[100px]">
+      <div className="max-w-7xl mx-auto flex px-3 lg:px-10 items-center justify-between h-[100px]">
 
         {/* LOGO */}
         <Link to="/">
@@ -251,8 +253,8 @@ function ExpandedNavbar({ cartCount, user, dispatch, navigate, searchQuery, setS
       </div>
 
       {/* BLACK NAV BAR */}
-      <nav className="bg-black h-[44px] px-3">
-        <div className="max-w-7xl mx-auto flex items-center gap-8 h-full">
+      <nav className="bg-black h-[44px]">
+        <div className="max-w-7xl mx-auto  px-3 lg:px-10 flex items-center gap-8 h-full">
           {navLinks.map((link) => (
             <Link key={link.path} to={link.path} className="text-white text-[12px] tracking-widest uppercase font-semibold hover:text-rose-400 transition-colors">
               {link.label}
@@ -265,13 +267,13 @@ function ExpandedNavbar({ cartCount, user, dispatch, navigate, searchQuery, setS
 }
 
 /* ─── COMPACT navbar ─── */
-function CompactNavbar({ cartCount, navigate, searchQuery, setSearchQuery, handleSearch, searchOpen, setSearchOpen }) {
+function CompactNavbar({ cartCount, dispatch, navigate, searchQuery, setSearchQuery, handleSearch, searchOpen, setSearchOpen }) {
   return (
     <>
       <div className="relative z-[80] bg-black h-[50px] flex items-center px-6 lg:px-14">
-        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
+        <div className="max-w-7xl px-3 lg:px-10 w-full mx-auto flex items-center justify-between">
           <Link to="/" className="text-white font-black text-[17px] tracking-widest uppercase mr-10 shrink-0" style={{ fontFamily: "'Georgia', serif", letterSpacing: "0.12em" }}>
-            SWOCCLOTHING
+            MAVISH
           </Link>
           <div className="hidden lg:flex items-center gap-7 flex-1">
             {navLinks.map((link) => (
@@ -282,7 +284,8 @@ function CompactNavbar({ cartCount, navigate, searchQuery, setSearchQuery, handl
           </div>
           <div className="flex items-center gap-5">
             <button onClick={() => setSearchOpen(true)} className="text-white hover:text-rose-400 transition-colors"><Search size={18} /></button>
-            <button className="relative text-white hover:text-rose-400 transition-colors">
+            {/* CHANGED: added onClick to dispatch toggleCart */}
+            <button onClick={() => dispatch(toggleCart())} className="relative text-white hover:text-rose-400 transition-colors">
               <ShoppingBag size={18} />
               <span className="absolute -top-2 -right-2 bg-white border border-red-300 text-red-600 rounded-full w-[15px] h-[15px] text-[9px] flex items-center justify-center font-bold leading-none">{cartCount}</span>
             </button>
@@ -500,6 +503,9 @@ export default function Navbar() {
           />
         </div>
       )}
+
+      {/* ADDED: CartSidebar renders globally from here */}
+      <CartSidebar />
     </>
   );
 }

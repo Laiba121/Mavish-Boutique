@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const API = 'http://localhost:5000/api';
 
-const saved = localStorage.getItem('mehrma_user');
+const saved = localStorage.getItem('mavish_user');
 
 // ─── Thunks ──────────────────────────────────────────────────────────────────
 export const registerUser = createAsyncThunk('auth/register', async (data, { rejectWithValue }) => {
@@ -16,7 +16,7 @@ export const registerUser = createAsyncThunk('auth/register', async (data, { rej
 export const verifyEmail = createAsyncThunk('auth/verifyEmail', async (data, { rejectWithValue }) => {
   try {
     const res = await axios.post(`${API}/auth/verify-email`, data);
-    localStorage.setItem('mehrma_user', JSON.stringify(res.data));
+    localStorage.setItem('mavish_user', JSON.stringify(res.data));
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Verification failed'); }
 });
@@ -31,7 +31,7 @@ export const resendOtp = createAsyncThunk('auth/resendOtp', async (data, { rejec
 export const loginUser = createAsyncThunk('auth/login', async (data, { rejectWithValue }) => {
   try {
     const res = await axios.post(`${API}/auth/login`, data);
-    localStorage.setItem('mehrma_user', JSON.stringify(res.data));
+    localStorage.setItem('mavish_user', JSON.stringify(res.data));
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data); }
 });
@@ -39,7 +39,7 @@ export const loginUser = createAsyncThunk('auth/login', async (data, { rejectWit
 export const googleLogin = createAsyncThunk('auth/google', async (data, { rejectWithValue }) => {
   try {
     const res = await axios.post(`${API}/auth/google`, data);
-    localStorage.setItem('mehrma_user', JSON.stringify(res.data));
+    localStorage.setItem('mavish_user', JSON.stringify(res.data));
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Google login failed'); }
 });
@@ -79,7 +79,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.pendingUserId = null;
-      localStorage.removeItem('mehrma_user');
+      localStorage.removeItem('mavish_user');
     },
     clearMessages: (state) => { state.error = null; state.success = null; },
     setPendingUser: (state, action) => { state.pendingUserId = action.payload; },

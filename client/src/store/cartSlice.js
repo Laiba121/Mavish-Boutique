@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
-    items: JSON.parse(localStorage.getItem('mehrma_cart') || '[]'),
+    items: JSON.parse(localStorage.getItem('mavish_cart') || '[]'),
     isOpen: false,
   },
   reducers: {
@@ -17,22 +17,22 @@ const cartSlice = createSlice({
       } else {
         state.items.push({ ...product, size, quantity });
       }
-      localStorage.setItem('mehrma_cart', JSON.stringify(state.items));
+      localStorage.setItem('mavish_cart', JSON.stringify(state.items));
     },
     removeFromCart: (state, action) => {
       const { id, size } = action.payload;
       state.items = state.items.filter(i => !(i._id === id && i.size === size));
-      localStorage.setItem('mehrma_cart', JSON.stringify(state.items));
+      localStorage.setItem('mavish_cart', JSON.stringify(state.items));
     },
     updateQuantity: (state, action) => {
       const { id, size, quantity } = action.payload;
       const item = state.items.find(i => i._id === id && i.size === size);
       if (item) item.quantity = quantity;
-      localStorage.setItem('mehrma_cart', JSON.stringify(state.items));
+      localStorage.setItem('mavish_cart', JSON.stringify(state.items));
     },
     clearCart: (state) => {
       state.items = [];
-      localStorage.removeItem('mehrma_cart');
+      localStorage.removeItem('mavish_cart');
     },
     toggleCart: (state) => {
       state.isOpen = !state.isOpen;

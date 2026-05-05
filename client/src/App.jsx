@@ -14,17 +14,20 @@ import ProductsAdmin from './Pages/admin/ProductsAdmin';
 import CategoriesAdmin from './Pages/admin/CategoriesAdmin';
 import OrdersAdmin from './Pages/admin/OrdersAdmin';
 import CustomersAdmin from './Pages/admin/CustomersAdmin';
-import ReviewsAdmin from './Pages/admin/ReviewsAdmin';
-import CouponsAdmin from './Pages/admin/CouponsAdmin';
-import CustomizationsAdmin from './Pages/admin/CustomizationsAdmin';
 import BannersAdmin from './Pages/admin/BannersAdmin'; 
-import PagesAdmin from './Pages/admin/PagesAdmin';
 import ContactsAdmin from './Pages/admin/ContactsAdmin';
 import SettingsAdmin from './Pages/admin/SettingsAdmin';
 import ProductDetail from './Pages/ProductDetail';
+import ShopPage from './Pages/ShopPage';
+import CategoryPage from './Pages/CategoryPage';
+import SearchPage from './Pages/SearchPage';
+import CartPage from './Pages/CartPage';
+import CheckoutPage from './Pages/CheckoutPage';
+
 
 // ✅ Import ProtectedRoute
 import ProtectedRoute from './components/ProtectedRoutes';
+import OrderConfirmationPage from './Pages/OrderConfirmationPage';
 
 export default function App() {
   const user = useSelector(selectUser);
@@ -114,32 +117,6 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/admin/reviews"
-          element={
-            <ProtectedRoute adminOnly>
-              <ReviewsAdmin />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/coupons"
-          element={
-            <ProtectedRoute adminOnly>
-              <CouponsAdmin />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/admin/customizations"
-          element={
-            <ProtectedRoute adminOnly>
-              <CustomizationsAdmin />
-            </ProtectedRoute>
-          }
-        />
 
         <Route
           path="/admin/banners"
@@ -150,16 +127,7 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/admin/pages"
-          element={
-            <ProtectedRoute adminOnly>
-              <PagesAdmin />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
+      <Route
           path="/admin/contacts"
           element={
             <ProtectedRoute adminOnly>
@@ -177,7 +145,19 @@ export default function App() {
           }
         />
 
-        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/sale" element={<ShopPage />} />
+        <Route path="/whats-new" element={<ShopPage />} />
+        <Route path="/boys" element={<ShopPage />} />
+        <Route path="/girls" element={<ShopPage />} />
+        <Route path="/men" element={<ShopPage />} />
+        <Route path="/women" element={<ShopPage />} />
+        <Route path="/category/:id" element={<CategoryPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/product/:slug" element={<ProductDetail />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/order-confirmation/:id" element={<OrderConfirmationPage />} />
+        
 
         {/* redirect /admin */}
         <Route

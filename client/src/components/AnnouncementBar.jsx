@@ -10,7 +10,7 @@ const TICKER_CSS = `
 }
 `;
 
-const seg = " For international queries/orders, please WhatsApp us at +92 300 180 3448   |    Standard delivery time: 4-5 weeks   |    ";
+const seg = "Standard delivery time: 4-5 weeks | For international queries/orders, please WhatsApp us at +92 300 180 3448   |    ";
 
 export default function AnnouncementBar() {
   return (

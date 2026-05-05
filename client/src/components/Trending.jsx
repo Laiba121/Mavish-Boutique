@@ -48,8 +48,8 @@ function ProductCard({ product }) {
 
   return (
     <Link
-      to={`/product/${product._id}`}
-      className="group block flex-shrink-0 w-[min(82vw,390px)] md:w-[calc((100%_-_74px)_/_3)]"
+      to={`/product/${product.slug || product._id}`}
+      className="group block flex-shrink-0 w-[85vw] sm:w-[60vw] md:w-[calc((100%-74px)/3)] lg:w-[calc((100%-111px)/4)]"
     >
       <div
         className="relative h-[360px] overflow-hidden bg-gray-100 md:h-[430px]"
@@ -144,11 +144,11 @@ export default function Trending() {
         Trending
       </h2>
 
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative px-6 lg:px-14 mx-auto max-w-7xl">
         <button
           onClick={() => scroll(-1)}
           aria-label="Previous trending products"
-          className="absolute -left-[18px] top-[180px] z-10 flex p-3 -translate-y-1/2 items-center justify-center rounded-md bg-black text-white shadow-md transition-colors hover:bg-neutral-800 md:top-[215px]"
+          className="absolute left-[20px] top-[180px] z-10 flex p-3 -translate-y-1/2 items-center justify-center rounded-md bg-black text-white shadow-md transition-colors hover:bg-neutral-800 md:top-[215px]"
         >
           <ChevronLeft size={28} strokeWidth={1} />
         </button>
@@ -166,7 +166,7 @@ export default function Trending() {
         <button
           onClick={() => scroll(1)}
           aria-label="Next trending products"
-          className="absolute -right-[18px] top-[180px] z-10 flex p-3 -translate-y-1/2 items-center justify-center rounded-md bg-black text-white shadow-md transition-colors hover:bg-neutral-800 md:top-[215px]"
+          className="absolute right-[20px] top-[180px] z-10 flex p-3 -translate-y-1/2 items-center justify-center rounded-md bg-black text-white shadow-md transition-colors hover:bg-neutral-800 md:top-[215px]"
         >
           <ChevronRight size={28} strokeWidth={1} />
         </button>
