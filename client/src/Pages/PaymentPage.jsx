@@ -7,7 +7,7 @@ export default function PaymentPage() {
       <Navbar />
 
       <main className="bg-[#fafafa] pb-14 pt-[110px]">
-        <section className="mx-auto max-w-7xl px-6 sm:px-8">
+        <section className="mx-auto max-w-7xl px-6 sm:px-8 pt-[25px] lg:pt-[100px]">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-10">
             <h1 className="font-display text-[34px] font-black leading-tight text-black sm:text-[44px]">
               Payment Policy

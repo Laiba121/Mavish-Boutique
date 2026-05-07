@@ -17,7 +17,9 @@ import uploadCategory from "./src/routes/admin/uploadCategory.js";
 import adminProduct from "./src/routes/admin/Product.js";
 import userProduct from "./src/routes/user/Product.js";
 import checkoutRouter from './src/routes/checkout.js';
-
+import userContact from './src/routes/user/Contact.js'; // ✅ PUBLIC ROUTES (contact form etc.)
+import adminContact from './src/routes/admin/Contact.js'; // ✅ ADMIN CONTACT ROUTES (view/delete messages)
+import adminUsers from './src/routes/admin/User.js'; // ✅ ADMIN USER MANAGEMENT
 
 
 import Product from './src/model/Product.js';
@@ -56,6 +58,8 @@ app.use("/api/admin/upload/categories", uploadCategory);
 
 // ADMIN
 app.use("/api/admin/products", adminProduct);
+app.use("/api/admin/contacts", adminContact);
+app.use('/api/admin/users', adminUsers);
 
 // USER
 app.use("/api/products", userProduct);
@@ -65,6 +69,8 @@ app.use('/api/checkout', checkoutRouter);
 // ✅ PUBLIC ROUTES (IMPORTANT FOR HERO BANNER)
 app.use('/api/banners', userBanner);
 app.use('/api/categories', userCategory);
+app.use('/api/contacts', userContact);
+
 
 // ================== HEALTH CHECK ==================
 app.get('/api/health', (_, res) => {

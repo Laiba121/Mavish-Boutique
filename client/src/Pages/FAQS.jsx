@@ -86,7 +86,7 @@ export default function FAQS() {
       <Navbar />
 
       <main className="pt-[110px] pb-12 bg-white">
-        <section className="mx-auto max-w-7xl px-6 sm:px-8">
+        <section className="mx-auto max-w-7xl px-6 sm:px-8 pt-[25px] lg:pt-[100px]">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-10 shadow-sm">
             <h1 className="font-display text-[34px] font-black leading-tight text-black sm:text-[44px]">
               Frequently Asked Questions

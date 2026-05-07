@@ -16,7 +16,6 @@ import OrdersAdmin from './Pages/admin/OrdersAdmin';
 import CustomersAdmin from './Pages/admin/CustomersAdmin';
 import BannersAdmin from './Pages/admin/BannersAdmin'; 
 import ContactsAdmin from './Pages/admin/ContactsAdmin';
-import SettingsAdmin from './Pages/admin/SettingsAdmin';
 import ProductDetail from './Pages/ProductDetail';
 import ShopPage from './Pages/ShopPage';
 import CategoryPage from './Pages/CategoryPage';
@@ -36,6 +35,8 @@ import PrivacyPolicy from './Pages/PrivacyPolicy';
 import PaymentPage from './Pages/PaymentPage';
 import ReturnAndExchange from './Pages/ReturnAndExchange';
 import FAQS from './Pages/FAQS';
+import ContactUs from './Pages/ContactUs';
+
 
 export default function App() {
   const user = useSelector(selectUser);
@@ -144,14 +145,6 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/admin/settings"
-          element={
-            <ProtectedRoute adminOnly>
-              <SettingsAdmin />
-            </ProtectedRoute>
-          }
-        />
 
         <Route path="/sale" element={<ShopPage />} />
         <Route path="/whats-new" element={<ShopPage />} />
@@ -165,6 +158,7 @@ export default function App() {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/return-exchange" element={<ReturnAndExchange />} />
         <Route path="/faqs" element={<FAQS />} />
+        <Route path="/contact" element={<ContactUs />} />
         <Route path="/category/:id" element={<CategoryPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/product/:slug" element={<ProductDetail />} />

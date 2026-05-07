@@ -1,12 +1,26 @@
-import mongoose from 'mongoose';
+// models/Contact.js
 
-const contactSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String },
-  message: { type: String, required: true },
-  status: { type: String, enum: ['new', 'read', 'replied'], default: 'new' },
-  createdAt: { type: Date, default: Date.now }
-});
+import mongoose from "mongoose";
 
-export default mongoose.model('Contact', contactSchema);
+const contactSchema = new mongoose.Schema(
+  {
+    name: String,
+
+    phone: String,
+
+    email: {
+      type: String,
+      required: true,
+    },
+
+    comment: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export default mongoose.model("Contact", contactSchema);

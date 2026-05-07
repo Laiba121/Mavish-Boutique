@@ -53,11 +53,7 @@ export default function Sidebar() {
       path: '/admin/contacts',
       icon: Mail,
     },
-    {
-      name: 'Settings',
-      path: '/admin/settings',
-      icon: Settings,
-    },
+  
   ];
 
   return (

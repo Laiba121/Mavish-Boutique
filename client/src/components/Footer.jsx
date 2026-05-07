@@ -56,6 +56,7 @@ export default function Footer() {
                 <Link
                   to={item === 'Return And Exchange' ? '/return-exchange'
                     : item === 'FAQs' ? '/faqs'
+                    : item === 'Contact Us' ? '/contact'
                     : '#'}
                   className="transition-colors hover:text-white">
                   {item}
