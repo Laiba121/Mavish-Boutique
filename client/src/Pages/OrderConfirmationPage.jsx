@@ -147,7 +147,7 @@ export default function OrderConfirmationPage() {
             Continue Shopping
           </Link>
           <Link
-            to="/account/orders"
+            to="/orders"
             className="flex-1 text-center py-3 border border-gray-300 text-sm font-semibold text-gray-700 uppercase tracking-widest rounded hover:bg-gray-50 transition"
           >
             View All Orders

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import api from '../utils/api';
@@ -59,6 +60,7 @@ function getAvailableSizes(product) {
 }
 
 export default function ProductDetail() {
+  const navigate = useNavigate();
   const { slug } = useParams();
   const dispatch = useDispatch();
   const [product, setProduct] = useState(null);
@@ -152,6 +154,28 @@ export default function ProductDetail() {
     dispatch(addToCart({ product, size: selectedSize, quantity }));
     dispatch(toggleCart());
   };
+
+ const handleBuyNow = () => {
+  if (soldOut || !selectedSize) return;
+
+  const buyNowItem = {
+    _id: product._id,
+    name: product.name,
+    images: product.images,
+    size: selectedSize,
+    price: product.isSale && product.salePrice ? product.salePrice : product.price,
+    quantity: quantity,
+    isSale: product.isSale,
+    salePrice: product.salePrice,
+  };
+
+  navigate('/checkout', {
+    state: {
+      buyNowItems: [buyNowItem],
+      buyNowMode: true,
+    },
+  });
+};
 
   return (
     <div className="bg-white min-h-screen">
@@ -319,12 +343,13 @@ export default function ProductDetail() {
               >
                 {soldOut ? 'Sold Out' : 'Add to Cart'}
               </button>
-              <button
-                type="button"
-                className="w-full py-4 text-sm font-semibold uppercase tracking-widest rounded border border-gray-800 bg-white text-gray-800 hover:bg-gray-50 transition"
-              >
-                Buy It Now
-              </button>
+          <button
+  type="button"
+  onClick={handleBuyNow}
+  className="w-full py-4 text-sm font-semibold uppercase tracking-widest rounded border border-gray-800 bg-white text-gray-800 hover:bg-gray-50 transition"
+>
+  Buy It Now
+</button>
             </div>
 
             {/* SKU / Tags */}

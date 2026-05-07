@@ -48,6 +48,16 @@ function advanceMethodLabel(method) {
 function advanceInstructions(order) {
   const amt = order.advanceAmount?.toLocaleString() ?? '—';
 
+  // ── Read payment details from environment variables ──────────────────────
+  const easypaisaNumber = process.env.EASYPAISA_NUMBER || '0300-XXXXXXX';
+  const easypaisaName   = process.env.EASYPAISA_NAME   || 'Mehrma Boutique';
+  const jazzcashNumber  = process.env.JAZZCASH_NUMBER  || '0300-XXXXXXX';
+  const jazzcashName    = process.env.JAZZCASH_NAME    || 'Mehrma Boutique';
+  const bankName        = process.env.BANK_NAME        || 'HBL';
+  const bankTitle       = process.env.BANK_ACCOUNT_TITLE  || 'Mehrma Boutique';
+  const bankAccount     = process.env.BANK_ACCOUNT_NUMBER || '0123-4567890-001';
+  const bankIban        = process.env.BANK_IBAN           || 'PK36HABB0000000000000000';
+
   if (order.advanceMethod === 'card') {
     return `
       <div style="background:#e8f4fd;border-left:4px solid #2b3a7a;padding:12px 16px;margin:20px 0;font-size:14px;color:#1a3060;">
@@ -61,8 +71,11 @@ function advanceInstructions(order) {
     return `
       <div style="background:#e8f8ee;border-left:4px solid #00a651;padding:12px 16px;margin:20px 0;font-size:14px;color:#004d25;">
         <strong>EasyPaisa – Advance Payment Required</strong><br/>
-        Please send <strong>Rs ${amt}.00</strong> to our EasyPaisa account
-        <strong>0300-XXXXXXX</strong> (Mehrma Boutique).<br/>
+        Please send <strong>Rs ${amt}.00</strong> to our EasyPaisa account:<br/>
+        <br/>
+        📱 <strong>Number:</strong> ${easypaisaNumber}<br/>
+        👤 <strong>Account Name:</strong> ${easypaisaName}<br/>
+        <br/>
         Use <strong>${order.orderNumber}</strong> as the description / reference.<br/>
         Your order ships once we confirm receipt.
       </div>`;
@@ -72,8 +85,11 @@ function advanceInstructions(order) {
     return `
       <div style="background:#fff5e6;border-left:4px solid #f0830a;padding:12px 16px;margin:20px 0;font-size:14px;color:#7a3c00;">
         <strong>JazzCash – Advance Payment Required</strong><br/>
-        Please send <strong>Rs ${amt}.00</strong> to our JazzCash account
-        <strong>0300-XXXXXXX</strong> (Mehrma Boutique).<br/>
+        Please send <strong>Rs ${amt}.00</strong> to our JazzCash account:<br/>
+        <br/>
+        📱 <strong>Number:</strong> ${jazzcashNumber}<br/>
+        👤 <strong>Account Name:</strong> ${jazzcashName}<br/>
+        <br/>
         Use <strong>${order.orderNumber}</strong> as the description / reference.<br/>
         Your order ships once we confirm receipt.
       </div>`;
@@ -83,8 +99,14 @@ function advanceInstructions(order) {
     return `
       <div style="background:#fff8e1;border-left:4px solid #f0a500;padding:12px 16px;margin:20px 0;font-size:14px;color:#7a5c00;">
         <strong>Bank Transfer – Advance Payment Required</strong><br/>
-        Please transfer <strong>Rs ${amt}.00</strong> to our bank account
-        using <strong>${order.orderNumber}</strong> as the payment reference.<br/>
+        Please transfer <strong>Rs ${amt}.00</strong> to our bank account:<br/>
+        <br/>
+        🏦 <strong>Bank:</strong> ${bankName}<br/>
+        👤 <strong>Account Title:</strong> ${bankTitle}<br/>
+        🔢 <strong>Account Number:</strong> ${bankAccount}<br/>
+        🌐 <strong>IBAN:</strong> ${bankIban}<br/>
+        <br/>
+        Use <strong>${order.orderNumber}</strong> as the payment reference.<br/>
         Your order ships once funds clear.
       </div>`;
   }

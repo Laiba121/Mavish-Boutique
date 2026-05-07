@@ -1,206 +1,294 @@
 import mongoose from 'mongoose';
 import Order from '../model/Order.js';
 import Product from '../model/Product.js';
+import jwt from 'jsonwebtoken';
 import { sendOrderConfirmation } from '../utils/Mailer.js';
 
-/**
- * POST /api/checkout
- * Places an order with 50% advance + 50% COD payment model.
- */
+/* ─────────────────────────────────────────────
+   PLACE ORDER (GUEST + LOGGED IN)
+───────────────────────────────────────────── */
 export async function placeOrder(req, res) {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const {
-      email,
-      firstName, lastName, address, apartment, city, postalCode, phone,
-      saveInfo,
-      shippingMethod = 'Standard',
-      shippingCost   = 380,
-      paymentMethod  = 'hybrid_cod',   // always 'hybrid_cod' in this flow
-      advanceMethod,                   // 'card' | 'easypaisa' | 'jazzcash' | 'bank'
-      advanceAmount,                   // should equal Math.ceil(total / 2)
-      codAmount,                       // remaining 50%
-      billingOption,
-      billFirstName, billLastName, billAddress, billApartment,
-      billCity, billPostal, billPhone,
-      items,
-      note,
-    } = req.body;
+   const {
+  email,
+  firstName,
+  lastName,
+  address,
+  apartment,
+  city,
+  postalCode,
+  phone,
+  saveInfo,
+  shippingMethod = 'Standard',
+  shippingCost = 380,
+  advanceMethod,
+  billingOption,
+  billFirstName,
+  billLastName,
+  billAddress,
+  billApartment,
+  billCity,
+  billPostal,
+  billPhone,
+  items,
+  note,
+} = req.body;
 
-    // ── 1. Basic validation ───────────────────────────────────────────────────
+const normalizedEmail = email?.toLowerCase().trim();
+
+    // ── USER ID (OPTIONAL FOR GUEST) ──
+    let userId = req.user?._id || req.headers['x-user-id'] || null;
+
+    if (!userId && req.headers.authorization) {
+      const token = req.headers.authorization.startsWith('Bearer ')
+        ? req.headers.authorization.slice(7)
+        : null;
+
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          userId = decoded._id || decoded.id || decoded.userId;
+        } catch {
+          userId = null; // guest fallback
+        }
+      }
+    }
+
+    // ── VALIDATION ──
     if (!email || !firstName || !lastName || !address || !city || !phone) {
       await session.abortTransaction();
-      return res.status(400).json({ message: 'Missing required delivery fields.' });
+      return res.status(400).json({ message: 'Missing required fields.' });
     }
-    if (!['card', 'easypaisa', 'jazzcash', 'bank'].includes(advanceMethod)) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: 'Invalid advance payment method.' });
-    }
+
     if (!Array.isArray(items) || items.length === 0) {
       await session.abortTransaction();
       return res.status(400).json({ message: 'Cart is empty.' });
     }
 
-    // ── 2. Load products + validate stock ────────────────────────────────────
-    const productIds = items.map((i) => i.productId);
-    const products   = await Product.find({ _id: { $in: productIds } }).session(session);
+    // ── LOAD PRODUCTS ──
+    const productIds = items.map(i => i.productId);
+    const products = await Product.find({ _id: { $in: productIds } }).session(session);
 
     const productMap = {};
-    products.forEach((p) => { productMap[p._id.toString()] = p; });
+    products.forEach(p => (productMap[p._id.toString()] = p));
 
+    // ── STOCK CHECK ──
     for (const item of items) {
       const product = productMap[item.productId];
       if (!product) {
         await session.abortTransaction();
-        return res.status(404).json({ message: `Product not found: ${item.productId}` });
+        return res.status(404).json({ message: 'Product not found' });
       }
 
-      let currentStock;
-      if (product.stock && typeof product.stock === 'object' && item.size) {
-        currentStock = product.stock.get
-          ? product.stock.get(item.size)
-          : product.stock[item.size];
-      } else {
-        currentStock = product.stock ?? product.quantity ?? Infinity;
-      }
-
-      if (currentStock !== undefined && currentStock < item.quantity) {
+      const stock = product.stock ?? product.quantity ?? 999999;
+      if (stock < item.quantity) {
         await session.abortTransaction();
-        return res.status(409).json({
-          message: `Insufficient stock for "${product.name}"${item.size ? ` (size ${item.size})` : ''}.`,
-        });
+        return res.status(409).json({ message: 'Insufficient stock' });
       }
     }
 
-    // ── 3. Reduce stock ───────────────────────────────────────────────────────
+    // ── REDUCE STOCK ──
     for (const item of items) {
-      const product = productMap[item.productId];
-      if (product.stock && typeof product.stock === 'object' && item.size) {
-        await Product.updateOne(
-          { _id: product._id },
-          { $inc: { [`stock.${item.size}`]: -item.quantity } },
-          { session }
-        );
-      } else {
-        await Product.updateOne(
-          { _id: product._id },
-          { $inc: { stock: -item.quantity } },
-          { session }
-        );
-      }
+      await Product.updateOne(
+        { _id: item.productId },
+        { $inc: { stock: -item.quantity } },
+        { session }
+      );
     }
 
-    // ── 4. Re-derive prices from DB ───────────────────────────────────────────
+    // ── CALCULATE TOTAL ──
     let subtotal = 0;
-    const orderItems = items.map((item) => {
+
+    const orderItems = items.map(item => {
       const product = productMap[item.productId];
-      const price   = product.isSale && product.salePrice ? product.salePrice : product.price;
+      const price = product.isSale ? product.salePrice : product.price;
       subtotal += price * item.quantity;
+
       return {
-        product:  product._id,
-        name:     product.name,
-        image:    product.images?.[0] || '',
-        size:     item.size,
+        product: product._id,
+        name: product.name,
+        image: product.images?.[0] || '',
+        size: item.size,
         price,
         quantity: item.quantity,
       };
     });
-    const total          = subtotal + Number(shippingCost);
-    const computedAdvance = Math.ceil(total / 2);
-    const computedCod    = total - computedAdvance;
 
-    // ── 5. Build addresses ────────────────────────────────────────────────────
-    const shippingAddress = { firstName, lastName, address, apartment, city, postalCode, phone };
-    const billingAddress  = billingOption === 'different'
-      ? { firstName: billFirstName, lastName: billLastName, address: billAddress,
-          apartment: billApartment, city: billCity, postalCode: billPostal, phone: billPhone }
-      : null;
+    const total = subtotal + shippingCost;
+    const advanceAmount = Math.ceil(total / 2);
+    const codAmount = total - advanceAmount;
 
-    // ── 6. Create order ───────────────────────────────────────────────────────
-    const [order] = await Order.create([{
-      user:            req.session?.userId || null,
-      email,
-      shippingAddress,
-      billingAddress,
-      items:           orderItems,
-      subtotal,
-      shippingCost:    Number(shippingCost),
-      total,
-      shippingMethod,
-      paymentMethod:   'hybrid_cod',
-      advanceMethod,
-      advanceAmount:   computedAdvance,
-      codAmount:       computedCod,
-      // advance is pending until confirmed externally (card gateway / manual mobile money check)
-      paymentStatus:   advanceMethod === 'card' ? 'pending' : 'advance_pending',
-      status:          'confirmed',
-      note,
-      saveInfo,
-    }], { session });
+    // ── SHIPPING ──
+    const shippingAddress = {
+      firstName,
+      lastName,
+      address,
+      apartment,
+      city,
+      postalCode,
+      phone,
+    };
 
-    // ── 7. Commit ─────────────────────────────────────────────────────────────
+let billingAddress;
+
+if (billingOption === 'different') {
+  if (!billFirstName || !billLastName || !billAddress || !billCity || !billPhone) {
+    // fallback instead of error (better UX)
+    billingAddress = shippingAddress;
+  } else {
+    billingAddress = {
+      firstName: billFirstName,
+      lastName: billLastName,
+      address: billAddress,
+      apartment: billApartment,
+      city: billCity,
+      postalCode: billPostal,
+      phone: billPhone,
+    };
+  }
+} else {
+  billingAddress = shippingAddress;
+}
+
+    // ── CREATE ORDER (FIXED GUEST SUPPORT) ──
+const orderData = {
+  user: userId ? new mongoose.Types.ObjectId(userId) : null,
+  email: normalizedEmail,   // ✅ IMPORTANT FIX
+  shippingAddress,
+  items: orderItems,
+  subtotal,
+  shippingCost,
+  total,
+  shippingMethod,
+  paymentMethod: 'hybrid_cod',
+  advanceMethod,
+  advanceAmount,
+  codAmount,
+  paymentStatus: 'advance_pending',
+  status: 'confirmed',
+  note,
+  saveInfo,
+};
+
+// ✅ Only attach if exists
+if (billingAddress) {
+  orderData.billingAddress = billingAddress;
+}
+
+const [order] = await Order.create([orderData], { session });
+
     await session.commitTransaction();
     session.endSession();
 
-    // ── 8. Send confirmation email (non-blocking) ─────────────────────────────
-    sendOrderConfirmation(order).catch((err) =>
-      console.error('[mailer] Confirmation email failed:', err)
-    );
+    sendOrderConfirmation(order).catch(() => {});
 
     return res.status(201).json({
-      message:     'Order placed successfully.',
+      message: 'Order placed successfully',
+      orderId: order._id,
       orderNumber: order.orderNumber,
-      orderId:     order._id,
     });
-
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
-    console.error('[checkout] placeOrder error:', err);
-    return res.status(500).json({ message: 'Something went wrong. Please try again.' });
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
   }
 }
 
-/**
- * GET /api/checkout/orders/:id
- */
+/* ─────────────────────────────────────────────
+   GET ORDER (NO LOGIN REQUIRED FOR GUEST)
+───────────────────────────────────────────── */
 export async function getOrder(req, res) {
   try {
-    const order = await Order.findById(req.params.id).populate('items.product', 'name images');
-    if (!order) return res.status(404).json({ message: 'Order not found.' });
+    const order = await Order.findById(req.params.id)
+      .populate('items.product', 'name images');
 
-    // Guest orders (user=null) are accessible by order ID alone — the Mongo ID
-    // acts as an unguessable token for the confirmation page.
-    const isGuest = !order.user;
-    const isOwner = order.user && order.user.toString() === req.session?.userId;
-    const isAdmin = req.session?.role === 'admin';
-    if (!isGuest && !isOwner && !isAdmin) {
-      return res.status(403).json({ message: 'Not authorised.' });
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found.' });
     }
 
+    // ✅ PUBLIC ACCESS (NO LOGIN REQUIRED)
     return res.json(order);
+
   } catch (err) {
-    console.error('[checkout] getOrder error:', err);
+    console.error('[getOrder] error:', err);
     return res.status(500).json({ message: 'Server error.' });
   }
 }
 
-/**
- * GET /api/checkout/orders
- */
+/* ─────────────────────────────────────────────
+   GET USER ORDERS
+───────────────────────────────────────────── */
 export async function getUserOrders(req, res) {
   try {
-    if (!req.session?.userId) {
-      return res.status(401).json({ message: 'Not authenticated.' });
+    let userId = null;
+    let email = null;
+
+    // ✅ 1. FROM TOKEN
+    const token = req.headers.authorization?.startsWith('Bearer ')
+      ? req.headers.authorization.slice(7)
+      : null;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded._id;
+        email = decoded.email;
+      } catch {
+        return res.status(401).json({ message: 'Invalid token' });
+      }
     }
-    const orders = await Order.find({ user: req.session.userId })
-      .sort({ createdAt: -1 })
-      .select('orderNumber total status paymentMethod advanceMethod advanceAmount codAmount createdAt items');
+
+    // ✅ 2. FROM QUERY (FOR GUEST)
+    if (!email && req.query.email) {
+      email = req.query.email.toLowerCase().trim();
+    }
+
+    if (!userId && !email) {
+      return res.status(400).json({ message: 'Email or login required' });
+    }
+
+    // ✅ FINAL QUERY
+    const orders = await Order.find({
+      $or: [
+        userId ? { user: userId } : null,
+        email ? { email } : null,
+      ].filter(Boolean),
+    }).sort({ createdAt: -1 });
+
     return res.json(orders);
+
   } catch (err) {
-    console.error('[checkout] getUserOrders error:', err);
-    return res.status(500).json({ message: 'Server error.' });
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
+
+export async function attachGuestOrders(req, res) {
+  try {
+    const userId = req.user?._id;
+    const email = req.body.email?.toLowerCase().trim();
+
+    if (!userId || !email) {
+      return res.status(400).json({ message: 'Missing data' });
+    }
+
+    // ✅ Update all guest orders with same email
+    const result = await Order.updateMany(
+      { email, user: null },
+      { $set: { user: userId } }
+    );
+
+    return res.json({
+      message: 'Guest orders linked',
+      updated: result.modifiedCount,
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
   }
 }

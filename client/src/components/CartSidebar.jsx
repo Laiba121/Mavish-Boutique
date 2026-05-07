@@ -134,6 +134,7 @@ export default function CartSidebar() {
 
             <button
               type="button"
+              onClick={() => navigate('/checkout')}
               className="w-full py-3.5 bg-[#2b3a7a] text-white text-sm font-bold uppercase tracking-widest hover:bg-[#1e2d63] transition rounded-sm"
             >
               CHECKOUT

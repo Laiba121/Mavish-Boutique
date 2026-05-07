@@ -1,22 +1,55 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ShoppingBag, ChevronDown, Lock, HelpCircle } from 'lucide-react';
 import { clearCart } from '../store/cartSlice';
+import { useLocation } from 'react-router-dom';
+
+// ── Payment account details ─────────────────────────────────────────────
+const EASYPAISA_NUMBER = import.meta.env.VITE_EASYPAISA_NUMBER || '0300-XXXXXXX';
+const EASYPAISA_NAME   = import.meta.env.VITE_EASYPAISA_NAME   || 'Mehrma Boutique';
+const JAZZCASH_NUMBER  = import.meta.env.VITE_JAZZCASH_NUMBER  || '0300-XXXXXXX';
+const JAZZCASH_NAME    = import.meta.env.VITE_JAZZCASH_NAME    || 'Mehrma Boutique';
+const BANK_NAME        = import.meta.env.VITE_BANK_NAME        || 'HBL';
+const BANK_TITLE       = import.meta.env.VITE_BANK_ACCOUNT_TITLE  || 'Mehrma Boutique';
+const BANK_ACCOUNT     = import.meta.env.VITE_BANK_ACCOUNT_NUMBER || '0123-4567890-001';
+const BANK_IBAN        = import.meta.env.VITE_BANK_IBAN           || 'PK36HABB0000000000000000';
 
 export default function CheckoutPage() {
   const navigate  = useNavigate();
+  const location = useLocation();
+
+const buyNowMode = location.state?.buyNowMode;
+const buyNowItems = location.state?.buyNowItems;
+
+const cartItems = useSelector((s) => s.cart.items);
+
+// FINAL ITEMS DECISION
+const items = buyNowMode ? buyNowItems : cartItems;
   const dispatch  = useDispatch();
-  const items     = useSelector((s) => s.cart.items);
+
+  // ✅ GET LOGGED IN USER
+const user = useSelector((s) => s.auth.user);
+
+const headers = {
+  'Content-Type': 'application/json',
+};
+
+if (user?.token) {
+  headers['Authorization'] = `Bearer ${user.token}`;
+}
+if (user?._id) {
+  headers['x-user-id'] = user._id;
+}
+
 
   const [form, setForm] = useState({
     email: '', firstName: '', lastName: '',
     address: '', apartment: '', city: '',
     postalCode: '', phone: '', saveInfo: false,
-    // Payment method for the 50% advance
-    advanceMethod: 'card',          // 'card' | 'easypaisa' | 'jazzcash' | 'bank'
+    advanceMethod: 'card',
     cardNumber: '', expiry: '', cvv: '', cardName: '',
-    mobileNumber: '',               // for easypaisa / jazzcash
+    mobileNumber: '',
     billingOption: 'same',
     billFirstName: '', billLastName: '', billAddress: '',
     billApartment: '', billCity: '', billPostal: '', billPhone: '',
@@ -25,13 +58,32 @@ export default function CheckoutPage() {
   const [loading, setLoading]   = useState(false);
   const [apiError, setApiError] = useState('');
 
+  // ✅ PREFILL USER DATA
+  useEffect(() => {
+    if (user) {
+      const [firstName = '', lastName = ''] = (user.name || '').split(' ');
+
+      setForm((prev) => ({
+        ...prev,
+        email: user.email || '',
+        firstName: user.firstName || firstName,
+        lastName: user.lastName || lastName,
+        phone: user.phone || '',
+        address: user.address || '',
+        city: user.city || '',
+        postalCode: user.postalCode || '',
+      }));
+    }
+  }, [user]);
+
   const subtotal  = items.reduce((sum, i) => {
     const price = i.isSale && i.salePrice ? i.salePrice : i.price;
     return sum + price * i.quantity;
   }, 0);
+
   const shipping  = subtotal > 0 ? 380 : 0;
   const total     = subtotal + shipping;
-  const advance   = Math.ceil(total / 2);   // 50% — round up to avoid underpayment
+  const advance   = Math.ceil(total / 2);
   const cod       = total - advance;
 
   const set = (k) => (e) =>
@@ -40,76 +92,97 @@ export default function CheckoutPage() {
   const inputCls = "w-full border border-gray-300 rounded px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#2b3a7a] focus:ring-1 focus:ring-[#2b3a7a] transition bg-white";
   const labelCls = "block text-xs text-gray-500 mb-1 font-medium";
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────
   async function handleSubmit() {
-    setApiError('');
-    setLoading(true);
+  setApiError('');
+  setLoading(true);
 
-    const payload = {
-      email:          form.email,
-      firstName:      form.firstName,
-      lastName:       form.lastName,
-      address:        form.address,
-      apartment:      form.apartment,
-      city:           form.city,
-      postalCode:     form.postalCode,
-      phone:          form.phone,
-      saveInfo:       form.saveInfo,
-      shippingMethod: 'Standard',
-      shippingCost:   380,
-      // Payment
-      paymentMethod:  'hybrid_cod',          // always hybrid for this flow
-      advanceMethod:  form.advanceMethod,    // how the 50% advance is paid
-      advanceAmount:  advance,
-      codAmount:      cod,
-      // Billing
-      billingOption:  form.billingOption,
-      billFirstName:  form.billFirstName,
-      billLastName:   form.billLastName,
-      billAddress:    form.billAddress,
-      billApartment:  form.billApartment,
-      billCity:       form.billCity,
-      billPostal:     form.billPostal,
-      billPhone:      form.billPhone,
-      // Cart items
-      items: items.map((i) => ({
-        productId: i._id,
-        name:      i.name,
-        image:     i.images?.[0] || '',
-        size:      i.size,
-        price:     i.isSale && i.salePrice ? i.salePrice : i.price,
-        quantity:  i.quantity,
-      })),
+  const payload = {
+  email: form.email,
+  firstName: form.firstName,
+  lastName: form.lastName,
+  address: form.address,
+  apartment: form.apartment,
+  city: form.city,
+  postalCode: form.postalCode,
+  phone: form.phone,
+  saveInfo: form.saveInfo,
+  shippingMethod: 'Standard',
+  shippingCost: 380,
+  paymentMethod: 'hybrid_cod',
+  advanceMethod: form.advanceMethod,
+  advanceAmount: advance,
+  codAmount: cod,
+  items: items.map((i) => ({
+    productId: i._id,
+    name: i.name,
+    image: i.images?.[0] || '',
+    size: i.size,
+    price: i.isSale && i.salePrice ? i.salePrice : i.price,
+    quantity: i.quantity,
+    billingOption: form.billingOption, 
+  })),
+};
+
+if (form.billingOption === 'different') {
+  if (
+    !form.billFirstName ||
+    !form.billLastName ||
+    !form.billAddress ||
+    !form.billCity ||
+    !form.billPhone
+  ) {
+    setApiError('Please fill complete billing address.');
+    setLoading(false);
+    return;
+  }
+}
+
+  try {
+    // ✅ FIX: include auth headers properly
+    const headers = {
+      'Content-Type': 'application/json',
     };
 
-    try {
-      const res = await fetch('/api/checkout', {
-        method:      'POST',
-        headers:     { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body:        JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        const msg = data.errors ? data.errors.join(' • ') : data.message;
-        setApiError(msg || 'Something went wrong. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      dispatch(clearCart());
-      navigate(`/order-confirmation/${data.orderId}`, {
-        state: { orderNumber: data.orderNumber },
-      });
-
-    } catch (err) {
-      console.error('[checkout submit]', err);
-      setApiError('Network error. Please check your connection and try again.');
-      setLoading(false);
+    if (user?.token) {
+      headers['Authorization'] = `Bearer ${user.token}`;
     }
+
+    if (user?._id) {
+      headers['x-user-id'] = user._id;
+    }
+
+    const res = await fetch('http://localhost:5000/api/checkout', {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const msg = data.errors ? data.errors.join(' • ') : data.message;
+      setApiError(msg || 'Something went wrong. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+   // ✅ SAVE EMAIL FOR GUEST USERS
+localStorage.setItem('guestEmail', form.email);
+
+dispatch(clearCart());
+
+navigate(`/order-confirmation/${data.orderId}`, {
+  state: { orderNumber: data.orderNumber },
+});
+
+  } catch (err) {
+    console.error('[checkout submit]', err);
+    setApiError('Network error. Please check your connection and try again.');
+    setLoading(false);
   }
+}
 
   // ── Advance payment method options ─────────────────────────────────────────
   const advanceMethods = [
@@ -287,10 +360,14 @@ export default function CheckoutPage() {
                     {/* EasyPaisa fields */}
                     {form.advanceMethod === 'easypaisa' && id === 'easypaisa' && (
                       <div className="px-4 pb-4 pt-3 bg-gray-50 space-y-3">
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          Send <strong>Rs {advance.toLocaleString()}.00</strong> to EasyPaisa account{' '}
-                          <strong>0300-XXXXXXX</strong> (Mehrma Boutique). Enter your mobile number below and we will confirm once received.
-                        </p>
+                        <div className="bg-white border border-green-200 rounded p-3 text-sm text-gray-700 space-y-1">
+                          <p className="font-semibold text-green-800 mb-2">Send advance to EasyPaisa:</p>
+                          <p>📱 <strong>Number:</strong> {EASYPAISA_NUMBER}</p>
+                          <p>👤 <strong>Account Name:</strong> {EASYPAISA_NAME}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Amount: <strong>Rs {advance.toLocaleString()}.00</strong> — use your order number as reference after placing.
+                          </p>
+                        </div>
                         <input
                           value={form.mobileNumber}
                           onChange={set('mobileNumber')}
@@ -303,10 +380,14 @@ export default function CheckoutPage() {
                     {/* JazzCash fields */}
                     {form.advanceMethod === 'jazzcash' && id === 'jazzcash' && (
                       <div className="px-4 pb-4 pt-3 bg-gray-50 space-y-3">
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          Send <strong>Rs {advance.toLocaleString()}.00</strong> to JazzCash account{' '}
-                          <strong>0300-XXXXXXX</strong> (Mehrma Boutique). Enter your mobile number below and we will confirm once received.
-                        </p>
+                        <div className="bg-white border border-orange-200 rounded p-3 text-sm text-gray-700 space-y-1">
+                          <p className="font-semibold text-orange-800 mb-2">Send advance to JazzCash:</p>
+                          <p>📱 <strong>Number:</strong> {JAZZCASH_NUMBER}</p>
+                          <p>👤 <strong>Account Name:</strong> {JAZZCASH_NAME}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Amount: <strong>Rs {advance.toLocaleString()}.00</strong> — use your order number as reference after placing.
+                          </p>
+                        </div>
                         <input
                           value={form.mobileNumber}
                           onChange={set('mobileNumber')}
@@ -319,9 +400,17 @@ export default function CheckoutPage() {
                     {/* Bank Transfer fields */}
                     {form.advanceMethod === 'bank' && id === 'bank' && (
                       <div className="px-4 pb-4 pt-3 bg-gray-50">
-                        <p className="text-sm text-gray-600 leading-relaxed">
-                          Transfer <strong>Rs {advance.toLocaleString()}.00</strong> to our bank account. Use your <strong>Order ID</strong> as the payment reference. Your order will not be processed until the advance clears.
-                        </p>
+                        <div className="bg-white border border-yellow-200 rounded p-3 text-sm text-gray-700 space-y-1">
+                          <p className="font-semibold text-yellow-800 mb-2">Bank Transfer Details:</p>
+                          <p>🏦 <strong>Bank:</strong> {BANK_NAME}</p>
+                          <p>👤 <strong>Account Title:</strong> {BANK_TITLE}</p>
+                          <p>🔢 <strong>Account No:</strong> {BANK_ACCOUNT}</p>
+                          <p>🌐 <strong>IBAN:</strong> {BANK_IBAN}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Transfer <strong>Rs {advance.toLocaleString()}.00</strong> and use your <strong>Order ID</strong> as the payment reference.
+                            Your order will not be processed until the advance clears.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -379,7 +468,7 @@ export default function CheckoutPage() {
                         <input value={form.billPostal} onChange={set('billPostal')} placeholder="Postal code (optional)" className={inputCls} />
                       </div>
                       <div className="relative">
-                        <input value={form.billPhone} onChange={set('billPhone')} placeholder="Phone (optional)" className={`${inputCls} pr-9`} />
+                        <input value={form.billPhone} onChange={set('billPhone')} placeholder="Phone (required)" className={`${inputCls} pr-9`} />
                         <HelpCircle size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       </div>
                     </div>

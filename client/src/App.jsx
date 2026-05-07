@@ -28,6 +28,8 @@ import CheckoutPage from './Pages/CheckoutPage';
 // ✅ Import ProtectedRoute
 import ProtectedRoute from './components/ProtectedRoutes';
 import OrderConfirmationPage from './Pages/OrderConfirmationPage';
+import OrderTrackingPage from './Pages/OrderTrackingPage';
+import MyOrdersPage from './Pages/MyOrdersPage';
 
 export default function App() {
   const user = useSelector(selectUser);
@@ -157,6 +159,8 @@ export default function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/order-confirmation/:id" element={<OrderConfirmationPage />} />
+        <Route path="/order-tracking" element={<OrderTrackingPage />}></Route>
+        <Route path="/orders" element={<MyOrdersPage />}> </Route>
         
 
         {/* redirect /admin */}
