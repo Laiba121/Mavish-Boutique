@@ -53,7 +53,11 @@ export default function Footer() {
           <ul className="space-y-3 font-body text-[11px] font-semibold text-[#c7c7c7]">
             {['Return And Exchange', 'FAQs', 'Contact Us'].map((item) => (
               <li key={item}>
-                <Link to="#" className="transition-colors hover:text-white">
+                <Link
+                  to={item === 'Return And Exchange' ? '/return-exchange'
+                    : item === 'FAQs' ? '/faqs'
+                    : '#'}
+                  className="transition-colors hover:text-white">
                   {item}
                 </Link>
               </li>
@@ -66,9 +70,22 @@ export default function Footer() {
             Information
           </h4>
           <ul className="space-y-3 font-body text-[11px] font-semibold text-[#c7c7c7]">
-            {['About Us', 'Privacy Policy', 'Terms Of Service', 'Payments'].map((item) => (
+{['About Us', 'Privacy Policy', 'Terms Of Service', 'Payments'].map((item) => (
               <li key={item}>
-                <Link to="#" className="transition-colors hover:text-white">
+                <Link
+                  to={
+                    item === 'About Us'
+                      ? '/about-us'
+                      : item === 'Terms Of Service'
+                        ? '/terms-of-service'
+                        : item === 'Privacy Policy'
+                          ? '/privacy-policy'
+                            : item === 'Payments'
+                            ? '/payment'
+                            : '/'
+                  }
+                  className="transition-colors hover:text-white"
+                >
                   {item}
                 </Link>
               </li>

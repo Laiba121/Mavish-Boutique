@@ -30,6 +30,12 @@ import ProtectedRoute from './components/ProtectedRoutes';
 import OrderConfirmationPage from './Pages/OrderConfirmationPage';
 import OrderTrackingPage from './Pages/OrderTrackingPage';
 import MyOrdersPage from './Pages/MyOrdersPage';
+import AboutUs from './Pages/AboutUs';
+import TermsOfService from './Pages/TermsOfService';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import PaymentPage from './Pages/PaymentPage';
+import ReturnAndExchange from './Pages/ReturnAndExchange';
+import FAQS from './Pages/FAQS';
 
 export default function App() {
   const user = useSelector(selectUser);
@@ -153,6 +159,12 @@ export default function App() {
         <Route path="/girls" element={<ShopPage />} />
         <Route path="/men" element={<ShopPage />} />
         <Route path="/women" element={<ShopPage />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route path="/return-exchange" element={<ReturnAndExchange />} />
+        <Route path="/faqs" element={<FAQS />} />
         <Route path="/category/:id" element={<CategoryPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/product/:slug" element={<ProductDetail />} />
