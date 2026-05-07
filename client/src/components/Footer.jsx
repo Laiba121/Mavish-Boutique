@@ -37,8 +37,8 @@ export default function Footer() {
             <p>Qila Marriage Hall, Qila Didar Singh,</p>
             <p>Gujranwala</p>
             <p>
-              <a href="mailto:customercare@swocclothing.com" className="transition-colors hover:text-white">
-                Customercare@Swocclothing.Com
+              <a href="mailto:customercare@mavish.com" className="transition-colors hover:text-white">
+                Customercare@Mavish.com
               </a>
             </p>
             <p>+92 300 100 3187 (WhatsApp Chat</p>
@@ -53,7 +53,12 @@ export default function Footer() {
           <ul className="space-y-3 font-body text-[11px] font-semibold text-[#c7c7c7]">
             {['Return And Exchange', 'FAQs', 'Contact Us'].map((item) => (
               <li key={item}>
-                <Link to="#" className="transition-colors hover:text-white">
+                <Link
+                  to={item === 'Return And Exchange' ? '/return-exchange'
+                    : item === 'FAQs' ? '/faqs'
+                    : item === 'Contact Us' ? '/contact'
+                    : '#'}
+                  className="transition-colors hover:text-white">
                   {item}
                 </Link>
               </li>
@@ -66,9 +71,22 @@ export default function Footer() {
             Information
           </h4>
           <ul className="space-y-3 font-body text-[11px] font-semibold text-[#c7c7c7]">
-            {['About Us', 'Privacy Policy', 'Terms Of Service', 'Payments'].map((item) => (
+{['About Us', 'Privacy Policy', 'Terms Of Service', 'Payments'].map((item) => (
               <li key={item}>
-                <Link to="#" className="transition-colors hover:text-white">
+                <Link
+                  to={
+                    item === 'About Us'
+                      ? '/about-us'
+                      : item === 'Terms Of Service'
+                        ? '/terms-of-service'
+                        : item === 'Privacy Policy'
+                          ? '/privacy-policy'
+                            : item === 'Payments'
+                            ? '/payment'
+                            : '/'
+                  }
+                  className="transition-colors hover:text-white"
+                >
                   {item}
                 </Link>
               </li>
@@ -122,7 +140,7 @@ export default function Footer() {
       <div className="border-t border-[#2d2d2d]">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-4 sm:px-8 md:flex-row">
           <p className="font-body text-[12px] font-semibold tracking-[0.02em] text-white">
-            Copyright © Swocclothing | All rights reserved.
+            Copyright © Mavish Boutique | All rights reserved.
           </p>
 
           <div className="flex items-center gap-5">

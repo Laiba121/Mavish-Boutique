@@ -7,9 +7,16 @@ import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.js
 
 const router = express.Router();
 
-const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-
+const generateToken = (user) =>
+  jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '30d' }
+  );
 const generateOtp = () =>
   String(Math.floor(100000 + Math.random() * 900000));
 

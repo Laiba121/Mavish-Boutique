@@ -5,7 +5,11 @@ const userSchema = new mongoose.Schema({
   name:     { type: String, required: true, trim: true },
   email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String },
+  phone:    { type: String },
+  address:  { type: String },
   role:     { type: String, enum: ['user', 'admin'], default: 'user' },
+  status:   { type: String, enum: ['active', 'blocked'], default: 'active' },
+  totalOrders: { type: Number, default: 0 },
   isVerified: { type: Boolean, default: false },
   googleId:   { type: String, sparse: true },
   avatar:     { type: String },
@@ -13,7 +17,8 @@ const userSchema = new mongoose.Schema({
   emailOtpExpiry: { type: Date },
   resetOtp:       { type: String },
   resetOtpExpiry: { type: Date },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 userSchema.pre('save', async function () {

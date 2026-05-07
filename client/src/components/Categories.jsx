@@ -1,33 +1,57 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
 
-const categories = [
+const FALLBACK_CATEGORIES = [
   {
-    name: 'Girls',
-    image: 'https://images.unsplash.com/photo-1617627143233-95c86f4a6e1e?w=500&q=80',
-    link: '/girls',
-    comingSoon: false,
-  },
-  {
-    name: 'Women',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-    link: '/women',
-    comingSoon: false,
-  },
-  {
+    _id: '1',
     name: 'Boys',
-    image: null,
-    link: '#',
-    comingSoon: true,
+    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=700&q=80',
+    comingSoon: false,
   },
   {
+    _id: '2',
+    name: 'Girls',
+    image: 'https://images.unsplash.com/photo-1617627143233-95c86f4a6e1e?w=700&q=80',
+    comingSoon: false,
+  },
+  {
+    _id: '3',
     name: 'Men',
-    image: null,
-    link: '#',
-    comingSoon: true,
+    image: 'https://images.unsplash.com/photo-1495121605193-b116b5b9c5d9?w=700&q=80',
+    comingSoon: false,
+  },
+  {
+    _id: '4',
+    name: 'Women',
+    image: 'https://images.unsplash.com/photo-1564836235481-71ce9728b7d0?w=700&q=80',
+    comingSoon: false,
   },
 ];
 
 export default function ShopByCategory() {
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
+
+ useEffect(() => {
+  api.get('/categories')
+    .then(res => {
+      const data = Array.isArray(res.data) ? res.data : [];
+
+      if (data.length > 0) {
+        setCategories(
+          data.map(cat => ({
+            ...cat,
+            link: `/category/${cat.slug || cat._id}`,
+            comingSoon: false,
+          }))
+        );
+      }
+    })
+    .catch(err => {
+      console.warn('Failed to fetch categories:', err);
+    });
+}, []);
+
   return (
     <section className="py-16 px-6 lg:px-16 bg-rose-50/40">
       <h2 className="font-display text-4xl text-center mb-12 text-gray-900">Shop By Category</h2>
@@ -35,8 +59,8 @@ export default function ShopByCategory() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 max-w-5xl mx-auto">
         {categories.map((cat) => (
           <Link
-            key={cat.name}
-            to={cat.link}
+            key={cat._id}
+            to={cat.link || `/category/${cat._id}`}
             className={`group block ${cat.comingSoon ? 'pointer-events-none' : ''}`}
           >
             <div className="relative overflow-hidden rounded-xl aspect-[3/4] bg-gray-100">
@@ -56,7 +80,7 @@ export default function ShopByCategory() {
                 </div>
               ) : (
                 <img
-                  src={cat.image}
+                  src={cat.image || 'https://images.unsplash.com/photo-1495121605193-b116b5b9c5d9?w=800&q=80'}
                   alt={cat.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />

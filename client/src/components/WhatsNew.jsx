@@ -33,15 +33,17 @@ export default function WhatsNew() {
   useEffect(() => {
     api.get('/products?newArrival=true&limit=8')
       .then(res => {
-        if (res.data.length > 0) {
+        const products = Array.isArray(res.data) ? res.data : [];
+        if (products.length > 0) {
           const map = {};
-          res.data.forEach(p => {
-            if (p.collection && !map[p.collection]) {
-              map[p.collection] = {
-                name: p.collection,
+          products.forEach(p => {
+            const collectionName = p.productCollection || p.collection;
+            if (collectionName && !map[collectionName]) {
+              map[collectionName] = {
+                name: collectionName,
                 highlight: false,
                 image: p.images?.[0] || '',
-                link: p.category === 'Girls' ? '/girls' : '/whats-new',
+                link: p.category?._id ? `/category/${p.category._id}` : '/whats-new',
               };
             }
           });
