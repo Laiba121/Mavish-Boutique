@@ -53,7 +53,12 @@ const productSchema = new mongoose.Schema({
   careInstructions: [{ type: String }],
   disclaimer: { type: String },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+sizeChartType: {
+  type: String,
+  enum: ['kids', 'women_standard', 'women_maxi', 'men_standard', 'men_western'],
+  default: null,
+},
 });
 
 productSchema.pre('save', async function () {
