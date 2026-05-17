@@ -15,23 +15,21 @@ async function seed() {
     await mongoose.connect(MONGO_URI);
     console.log('✅ Connected to MongoDB');
 
-    // 🧹 Clear everything
-    await User.deleteMany({});
-    await Product.deleteMany({});
-    console.log('🗑️ Cleared users & products');
+ // 🧹 Clear everything
+await User.deleteMany({});
+await Product.deleteMany({});
+console.log('🗑️ Cleared users & products');
 
-    // 🔥 Create ONLY ADMIN (verified)
-    const admin = await User.create({
-      name: 'Admin',
-      email: 'admin@mehrma.com',
-      password: 'Admin@1234', // ⚠️ DO NOT hash manually (pre-save will hash)
-      role: 'admin',
-      isVerified: true, // ✅ IMPORTANT FIX
-    });
+// 🔥 Create ONLY ADMIN (verified)
+await User.create({
+  name: 'Admin',
+  email: 'admin@mavish.com',
+  password: 'Admin@1234',
+  role: 'admin',
+  isVerified: true,
+});
 
-    console.log('👑 Admin created:');
-    console.log('Email: admin@mehrma.com');
-    console.log('Password: Admin@1234');
+console.log('👑 Admin created: admin@mavish.com / Admin@1234');
 
     // 📦 Insert products
     await Product.insertMany(products);

@@ -33,7 +33,6 @@ function initializeGoogleButton(buttonId, onCredential) {
     window.google.accounts.id.renderButton(button, {
       theme: 'outline',
       size: 'large',
-      width: '100%',
       text: 'signup_with',
       shape: 'rectangular',
     });
@@ -345,8 +344,8 @@ export default function RegisterPage() {
 
           <p className="text-center text-xs text-gray-400 mt-6 leading-relaxed">
             By creating an account you agree to our{' '}
-            <Link to="/terms" className="underline hover:text-pink-600">Terms</Link> &{' '}
-            <Link to="/privacy" className="underline hover:text-pink-600">Privacy Policy</Link>.
+            <Link to="/terms-of-service" className="underline hover:text-pink-600">Terms</Link> &{' '}
+            <Link to="/privacy-policy" className="underline hover:text-pink-600">Privacy Policy</Link>.
           </p>
         </div>
       </div>

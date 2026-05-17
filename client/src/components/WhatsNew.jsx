@@ -64,10 +64,7 @@ export default function WhatsNew() {
 
     image: p.images?.[0] || '',
 
-    // ✅ redirect to category page
-    link: `/category/${
-      p.category?._id || p.category
-    }`,
+   link: `/whats-new?collection=${encodeURIComponent(p.productCollection)}`
   }));
 
         setCollections(dynamicCollections);

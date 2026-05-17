@@ -36,6 +36,7 @@ import PaymentPage from './Pages/PaymentPage';
 import ReturnAndExchange from './Pages/ReturnAndExchange';
 import FAQS from './Pages/FAQS';
 import ContactUs from './Pages/ContactUs';
+import ScrollToTop from './components/ScrollToTop';
 
 
 export default function App() {
@@ -44,8 +45,10 @@ export default function App() {
   return (
     <>
       <Toaster position="top-center" />
+      <ScrollToTop />
 
       <Routes>
+
 
         {/* ROOT */}
         <Route

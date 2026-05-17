@@ -7,12 +7,32 @@ export const getProducts = async (req, res) => {
   try {
     const query = {};
 
+    // ✅ FILTER BY CATEGORY ID
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    // ✅ SEARCH by name (case-insensitive, partial match)
+    if (req.query.search) {
+      query.name = { $regex: req.query.search, $options: "i" };
+    }
+
     // ✅ FILTER NEW ARRIVALS
     if (req.query.newArrival === "true") {
       query.isNewArrival = true;
     }
 
-    // ✅ OPTIONAL STATUS FILTER
+    // ✅ FILTER SALE ITEMS
+    if (req.query.sale === "true") {
+      query.isSale = true;
+    }
+
+   // ✅ ADD THIS: COLLECTION FILTER
+    if (req.query.collection) {
+      query.productCollection = req.query.collection;
+    }
+
+    // ✅ ONLY ACTIVE PRODUCTS
     query.status = "active";
 
     // ✅ LIMIT
@@ -27,10 +47,7 @@ export const getProducts = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -44,17 +61,13 @@ export const getSingleProduct = async (req, res) => {
     }).populate("category", "_id name");
 
     if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-      });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     res.json(product);
 
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -77,24 +90,21 @@ export const createProduct = async (req, res) => {
 };
 
 //
-// ─── UPDATE PRODUCT (FIXED 🔥) ─────────────────────
+// ─── UPDATE PRODUCT ─────────────────────────────────
 //
 export const updateProduct = async (req, res) => {
   try {
     let data = { ...req.body };
 
-    // ❌ remove invalid fields
     delete data.slug;
     if (!data.sku) delete data.sku;
 
-    // ✅ remove empty fields (VERY IMPORTANT)
     Object.keys(data).forEach((key) => {
       if (data[key] === "" || data[key] === undefined) {
         delete data[key];
       }
     });
 
-    // ✅ ensure images are valid URLs only
     if (Array.isArray(data.images)) {
       data.images = data.images.filter(
         (img) => typeof img === "string" && img.startsWith("http")

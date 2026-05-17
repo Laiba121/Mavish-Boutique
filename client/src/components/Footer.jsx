@@ -4,13 +4,47 @@ import { FaFacebookF, FaInstagram, FaPinterestP, FaYoutube } from 'react-icons/f
 import { Ghost, Music2, X } from 'lucide-react';
 
 const socialLinks = [
-  { Icon: FaFacebookF, href: '#', label: 'Facebook' },
-  { Icon: FaInstagram, href: '#', label: 'Instagram' },
-  { Icon: FaPinterestP, href: '#', label: 'Pinterest' },
-  { Icon: Music2, href: '#', label: 'TikTok' },
-  { Icon: Ghost, href: '#', label: 'Snapchat' },
-  { Icon: FaYoutube, href: '#', label: 'YouTube' },
-  { Icon: X, href: '#', label: 'X' },
+  {
+    Icon: FaFacebookF,
+    href: 'https://www.facebook.com/share/1NwUHgLm6v/',
+    label: 'Facebook',
+  },
+
+  {
+    Icon: FaInstagram,
+    href: 'https://www.instagram.com/mavish.boutique?igsh=MXR4djd2MjM3aDQ3dQ==',
+    label: 'Instagram',
+  },
+
+  {
+    Icon: Music2,
+    href: 'https://www.tiktok.com/@mehrma.boutique?_r=1&_t=ZS-96FaaP73CmC',
+    label: 'TikTok',
+  },
+
+  {
+    Icon: FaPinterestP,
+    href: '#',
+    label: 'Pinterest',
+  },
+
+  {
+    Icon: Ghost,
+    href: '#',
+    label: 'Snapchat',
+  },
+
+  {
+    Icon: FaYoutube,
+    href: '#',
+    label: 'YouTube',
+  },
+
+  {
+    Icon: X,
+    href: '#',
+    label: 'X',
+  },
 ];
 
 export default function Footer() {
@@ -124,14 +158,19 @@ export default function Footer() {
 
           <div className="mt-7 flex flex-wrap gap-4">
             {socialLinks.map(({ Icon, href, label }) => (
-              <a
-                key={label}
-                href={href}
-                aria-label={label}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#232323] transition-colors hover:bg-neutral-200"
-              >
-                <Icon size={label === 'X' ? 15 : 13} strokeWidth={label === 'X' ? 1.8 : undefined} />
-              </a>
+             <a
+  key={label}
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  aria-label={label}
+  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#232323] transition-colors hover:bg-neutral-200"
+>
+  <Icon
+    size={label === 'X' ? 15 : 13}
+    strokeWidth={label === 'X' ? 1.8 : undefined}
+  />
+</a>
             ))}
           </div>
         </div>

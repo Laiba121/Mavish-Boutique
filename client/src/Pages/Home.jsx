@@ -5,6 +5,7 @@ import WhatsNew from "../components/WhatsNew";
 import Categories from "../components/Categories";
 import Trending from "../components/Trending";
 import Footer from "../components/Footer";
+import CustomizedOrdersSection from "../components/CustomizedOrder";
 
 export default function Home() {
   return (
@@ -14,6 +15,8 @@ export default function Home() {
       <WhatsNew />
       <Categories />
       <Trending />
+      
+      <CustomizedOrdersSection />
       <Footer />
     </>
   );

@@ -4,20 +4,47 @@ import Topbar from '../../components/admin/Topbar';
 import api from '../../utils/api';
 
 // ── Size chart config (single source of truth) ────────────────────────────────
+// ── Drop this into ProductsAdmin.jsx replacing the old SIZE_CHART_OPTIONS and SIZES_FOR_CHART ──
+
 const SIZE_CHART_OPTIONS = [
-  { value: 'kids',           label: 'Kids (Boys & Girls)' },
-  { value: 'women_standard', label: 'Women — Shalwar Kameez / Suits' },
-  { value: 'women_maxi',     label: 'Women — Maxi Dress' },
-  { value: 'men_standard',   label: 'Men — Shalwar Kameez' },
-  { value: 'men_western',    label: 'Men — Shirts / Pants' },
+  { value: '',                      label: '— No size chart —' },
+
+  // Kids Girls
+  { value: 'kids_girls_frock',        label: 'Kids Girls — Frock / Dress' },
+  { value: 'kids_girls_shalwar_kameez', label: 'Kids Girls — Shalwar Kameez / Suit' },
+  { value: 'kids_girls_lehenga',      label: 'Kids Girls — Lehenga / Sharara' },
+  { value: 'kids_girls_maxi',         label: 'Kids Girls — Maxi Dress' },
+  { value: 'kids_girls_coat_suit',    label: 'Kids Girls — Coat / Jacket Suit' },
+
+  // Women
+  { value: 'women_shalwar_kameez',    label: 'Women — Shalwar Kameez / Suit' },
+  { value: 'women_maxi',              label: 'Women — Maxi Dress' },
+  { value: 'women_lehenga',           label: 'Women — Lehenga / Sharara' },
+  { value: 'women_frock',             label: 'Women — Frock / A-Line Dress' },
+  { value: 'women_gown',              label: 'Women — Gown / Evening Dress' },
+  { value: 'women_coat_suit',         label: 'Women — Coat / Jacket Suit' },
+  { value: 'women_kaftan',            label: 'Women — Kaftan / Abaya' },
+  { value: 'women_palazzo_suit',      label: 'Women — Palazzo Suit' },
+
 ];
 
 const SIZES_FOR_CHART = {
-  kids:           ['New Born', '0-3M', '3-6M', '6-9M', '9-12M', '1-2Y', '2-3Y', '3-4Y', '4-5Y', '5-6Y', '6-7Y', '7-8Y', '8-9Y', '9-10Y', '10-11Y', '11-12Y', '12-13Y', '13-14Y'],
-  women_standard: ['XS', 'S', 'M', 'L', 'XL', '2XL'],
-  women_maxi:     ['XS', 'S', 'M', 'L', 'XL', '2XL'],
-  men_standard:   ['S', 'M', 'L', 'XL', '2XL'],
-  men_western:    ['S', 'M', 'L', 'XL', '2XL'],
+  // Kids Girls — age-based
+  kids_girls_frock:          ['1-2Y','2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y'],
+  kids_girls_shalwar_kameez: ['1-2Y','2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y'],
+  kids_girls_lehenga:        ['1-2Y','2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y'],
+  kids_girls_maxi:           ['2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y'],
+  kids_girls_coat_suit:      ['2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y','9-10Y','10-11Y','11-12Y','12-13Y','13-14Y'],
+
+  // Women
+  women_shalwar_kameez:      ['XS','S','M','L','XL','2XL','3XL'],
+  women_maxi:                ['XS','S','M','L','XL','2XL','3XL'],
+  women_lehenga:             ['XS','S','M','L','XL','2XL','3XL'],
+  women_frock:               ['XS','S','M','L','XL','2XL','3XL'],
+  women_gown:                ['XS','S','M','L','XL','2XL','3XL'],
+  women_coat_suit:           ['XS','S','M','L','XL','2XL','3XL'],
+  women_kaftan:              ['XS','S','M','L','XL','2XL','3XL'],
+  women_palazzo_suit:        ['XS','S','M','L','XL','2XL','3XL'],
 };
 
 const EMPTY_FORM = {
