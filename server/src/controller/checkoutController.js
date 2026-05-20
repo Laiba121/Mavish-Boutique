@@ -2,19 +2,26 @@ import mongoose from 'mongoose';
 import Order from '../model/Order.js';
 import Product from '../model/Product.js';
 import jwt from 'jsonwebtoken';
-import { sendOrderConfirmation } from '../utils/Mailer.js';
+import { sendOrderConfirmation, sendBankDepositAlert } from '../utils/Mailer.js';
 
-async function getPaymob() {
-  try { return await import('../services/paymobService.js'); }
-  catch (e) { console.warn('[paymob] service not available:', e.message); return null; }
+async function getPayfast() {
+  try { return await import('../services/payfastService.js'); }
+  catch (e) { console.warn('[payfast] service not available:', e.message); return null; }
+}
+
+function getFrontendBase() {
+  return process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+}
+
+function getApiBase() {
+  return process.env.API_PUBLIC_URL || process.env.BACKEND_URL || 'http://localhost:5000/api';
 }
 
 /* ─────────────────────────────────────────────
-   PLACE ORDER + INITIATE PAYMOB PAYMENT
+   PLACE ORDER + INITIATE PAYFAST PAYMENT
 ───────────────────────────────────────────── */
 export async function placeOrder(req, res) {
-  // Strip any raw card data immediately — never stored
-  delete req.body.card;
+  delete req.body.card; // never store raw card data
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -68,14 +75,24 @@ export async function placeOrder(req, res) {
     // ── STOCK CHECK ──
     for (const item of items) {
       const product = productMap[item.productId];
-      if (!product) { await session.abortTransaction(); session.endSession(); return res.status(404).json({ message: `Product not found: ${item.productId}` }); }
+      if (!product) {
+        await session.abortTransaction(); session.endSession();
+        return res.status(404).json({ message: `Product not found: ${item.productId}` });
+      }
       const stock = product.stock ?? product.quantity ?? 999999;
-      if (stock < item.quantity) { await session.abortTransaction(); session.endSession(); return res.status(409).json({ message: `Insufficient stock: ${product.name}` }); }
+      if (stock < item.quantity) {
+        await session.abortTransaction(); session.endSession();
+        return res.status(409).json({ message: `Insufficient stock: ${product.name}` });
+      }
     }
 
     // ── REDUCE STOCK ──
     for (const item of items) {
-      await Product.updateOne({ _id: item.productId }, { $inc: { stock: -item.quantity } }, { session });
+      await Product.updateOne(
+        { _id: item.productId },
+        { $inc: { stock: -item.quantity } },
+        { session }
+      );
     }
 
     // ── CALCULATE TOTAL ──
@@ -84,7 +101,14 @@ export async function placeOrder(req, res) {
       const product = productMap[item.productId];
       const price   = product.isSale ? product.salePrice : product.price;
       subtotal += price * item.quantity;
-      return { product: product._id, name: product.name, image: product.images?.[0] || '', size: item.size, price, quantity: item.quantity };
+      return {
+        product:  product._id,
+        name:     product.name,
+        image:    product.images?.[0] || '',
+        size:     item.size,
+        price,
+        quantity: item.quantity,
+      };
     });
 
     const total         = subtotal + shippingCost;
@@ -94,8 +118,15 @@ export async function placeOrder(req, res) {
     // ── ADDRESSES ──
     const shippingAddress = { firstName, lastName, address, apartment, city, postalCode, phone };
     let billingAddress = shippingAddress;
-    if (billingOption === 'different' && billFirstName && billLastName && billAddress && billCity && billPhone) {
-      billingAddress = { firstName: billFirstName, lastName: billLastName, address: billAddress, apartment: billApartment, city: billCity, postalCode: billPostal, phone: billPhone };
+    if (
+      billingOption === 'different' &&
+      billFirstName && billLastName && billAddress && billCity && billPhone
+    ) {
+      billingAddress = {
+        firstName: billFirstName, lastName: billLastName,
+        address: billAddress, apartment: billApartment,
+        city: billCity, postalCode: billPostal, phone: billPhone,
+      };
     }
 
     // ── CREATE ORDER ──
@@ -117,56 +148,79 @@ export async function placeOrder(req, res) {
     await session.commitTransaction();
     session.endSession();
 
+    // Always send order confirmation to customer
     sendOrderConfirmation(order).catch(() => {});
 
     const orderId = order._id;
 
-    // ── BANK TRANSFER — no payment gateway needed ──
+    // ── BANK TRANSFER — send admin alert, no gateway needed ──
     if (advanceMethod === 'bank') {
+      // Fire-and-forget admin notification
+      sendBankDepositAlert(order).catch(() => {});
+
       return res.status(201).json({
-        message: 'Order placed successfully',
-        orderId, orderNumber: order.orderNumber,
-        paymentType: 'manual',
+        message:     'Order placed successfully',
+        orderId,
+        orderNumber: order.orderNumber,
+        paymentType: 'bank_transfer',
       });
     }
 
-    // ── PAYMOB (card / easypaisa / jazzcash) ──
-    const paymob = await getPaymob();
-    if (!paymob) {
+    // ── PAYFAST (card / easypaisa / jazzcash) ──
+    const payfast = await getPayfast();
+    if (!payfast) {
       return res.status(201).json({
-        message: 'Order placed. Payment gateway not configured yet — admin will contact you.',
-        orderId, orderNumber: order.orderNumber,
+        message:     'Order placed. Payment gateway not configured — admin will contact you.',
+        orderId,
+        orderNumber: order.orderNumber,
         paymentType: 'manual',
       });
     }
 
     try {
-      const { paymentKey, paymobOrderId, iframeId } = await paymob.createPaymobPayment({
-        orderId:    orderId.toString(),
-        amountPKR:  advanceAmount,
-        method:     advanceMethod,
-        customer: { email: normalizedEmail, firstName, lastName, address, phone, city, postalCode },
-        items:      orderItems,
+      const frontendBase = getFrontendBase();
+      const apiBase = getApiBase();
+
+      const { actionUrl, fields, basketId, token } = await payfast.createPayfastPayment({
+        order,
+        amountPKR: advanceAmount,
+        frontendBase,
+        apiBase,
+        req,
+        customer: {
+          email: normalizedEmail,
+          firstName,
+          lastName,
+          address,
+          city,
+          postalCode,
+          phone,
+        },
       });
 
-      // Save paymob order id on our order for webhook matching
-      await Order.findByIdAndUpdate(orderId, { 'payment.paymobOrderId': paymobOrderId });
+      await Order.findByIdAndUpdate(orderId, {
+        'payment.payfastBasketId': basketId,
+        'payment.payfastToken': token,
+      });
 
       return res.status(201).json({
         message:      'Order placed successfully',
         orderId,
         orderNumber:  order.orderNumber,
-        paymentType:  advanceMethod === 'card' ? 'paymob_iframe' : 'paymob_wallet',
-        paymentKey,
-        iframeId,     // frontend uses this to build iframe URL for card
+        paymentType:  'payfast_form',
+        payfast: {
+          actionUrl,
+          fields,
+        },
         advanceMethod,
       });
 
     } catch (err) {
-      console.error('[paymob init]', err.message);
+      console.error('[payfast init]', err.message);
       return res.status(201).json({
         message:     'Order placed but payment init failed. Please retry payment.',
-        orderId, orderNumber: order.orderNumber,
+        orderId,
+        orderNumber: order.orderNumber,
         paymentType: 'manual',
       });
     }
@@ -179,39 +233,71 @@ export async function placeOrder(req, res) {
 }
 
 /* ─────────────────────────────────────────────
-   PAYMOB WEBHOOK
-   POST /api/payments/paymob/webhook
+   PAYFAST PAYMENT RESPONSE
+   GET/POST /api/payments/payfast/*
 ───────────────────────────────────────────── */
-export async function paymobWebhook(req, res) {
+async function updateOrderFromPayfast(req) {
+  const { verifyPayfastResponse, isPayfastSuccess } = await import('../services/payfastService.js');
+  const params = { ...(req.query || {}), ...(req.body || {}) };
+  const { valid, basketId, errCode } = verifyPayfastResponse(params);
+
+  if (!valid) {
+    console.warn('[payfast] invalid validation_hash for basket', basketId);
+    return { ok: false, orderId: basketId, status: 'failed' };
+  }
+
+  const success = isPayfastSuccess(errCode);
+  const update = success
+    ? {
+        paymentStatus: 'advance_confirmed',
+        'payment.payfastTxnId': params.transaction_id || params.TRANSACTION_ID,
+        'payment.payfastMethod': params.PaymentName || params.payment_name,
+        'payment.payfastErrCode': errCode,
+        'payment.payfastErrMsg': params.err_msg || params.ERR_MSG,
+      }
+    : {
+        paymentStatus: 'failed',
+        'payment.payfastErrCode': errCode,
+        'payment.payfastErrMsg': params.err_msg || params.ERR_MSG,
+      };
+
+  await Order.findOneAndUpdate(
+    { $or: [{ _id: basketId }, { 'payment.payfastBasketId': basketId }] },
+    update
+  );
+
+  return { ok: true, orderId: basketId, status: success ? 'success' : 'failed' };
+}
+
+export async function payfastWebhook(req, res) {
   try {
-    const { verifyPaymobHmac } = await import('../services/paymobService.js');
-    const hmac = req.query['hmac'];
-
-    if (!verifyPaymobHmac(req.body, hmac)) {
-      console.warn('[paymob webhook] invalid HMAC');
-      return res.status(400).json({ message: 'Invalid HMAC' });
-    }
-
-    const obj     = req.body.obj || req.body;
-    const success = obj.success === true || obj.success === 'true';
-    const paymobOrderId = obj.order?.id?.toString() || obj.order?.toString();
-
-    if (success && paymobOrderId) {
-      await Order.findOneAndUpdate(
-        { 'payment.paymobOrderId': paymobOrderId },
-        {
-          paymentStatus:          'advance_paid',
-          'payment.paymobTxnId':  obj.id,
-          'payment.paymobMethod': obj.source_data?.type,
-        }
-      );
-    }
-
+    await updateOrderFromPayfast(req);
     return res.json({ received: true });
   } catch (err) {
-    console.error('[paymob webhook]', err);
+    console.error('[payfast webhook]', err);
     return res.status(500).json({ message: 'Webhook error' });
   }
+}
+
+export async function payfastReturn(req, res) {
+  const frontendBase = getFrontendBase();
+  try {
+    const result = await updateOrderFromPayfast(req);
+    const orderId = result.orderId || req.params.orderId || req.query.order_id;
+    return res.redirect(`${frontendBase}/order-confirmation/${orderId}?status=${result.status}`);
+  } catch (err) {
+    console.error('[payfast return]', err);
+    const orderId = req.params.orderId || req.query.order_id || '';
+    return res.redirect(`${frontendBase}/order-confirmation/${orderId}?status=failed`);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   DISABLED LEGACY WEBHOOK (keeps old routes alive)
+───────────────────────────────────────────── */
+export function disabledPaymentWebhook(req, res) {
+  console.warn('[legacy webhook] received call on deprecated endpoint');
+  return res.status(410).json({ message: 'This payment webhook endpoint is no longer active.' });
 }
 
 /* ─────────────────────────────────────────────
@@ -244,9 +330,11 @@ export async function getUserOrders(req, res) {
     }
     if (!email && req.query.email) email = req.query.email.toLowerCase().trim();
     if (!userId && !email) return res.status(400).json({ message: 'Email or login required' });
+
     const orders = await Order.find({
       $or: [userId ? { user: userId } : null, email ? { email } : null].filter(Boolean),
     }).sort({ createdAt: -1 });
+
     return res.json(orders);
   } catch (err) {
     console.error('[getUserOrders]', err);

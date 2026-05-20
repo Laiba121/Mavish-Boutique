@@ -65,4 +65,18 @@ router.delete('/orders/:id', protect, adminOnly, async (req, res) => {
 
 router.post('/attach-guest-orders', protect, attachGuestOrders);
 
+// POST /api/checkout/payment/verify
+// Deprecated gateway callback route kept for old links.
+router.post('/payment/verify', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const { order_id } = req.body;
+    const frontendBase = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+    return res.redirect(`${frontendBase}/order-confirmation/${order_id}?status=pending`);
+  } catch (err) {
+    console.error('[payment verify]', err);
+    const frontendBase = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+    res.redirect(`${frontendBase}?error=payment_verify_failed`);
+  }
+});
+
 export default router;

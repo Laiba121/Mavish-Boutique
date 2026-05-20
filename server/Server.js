@@ -47,8 +47,6 @@ app.use(cors({
   credentials: true
 }));
 
-app.use('/api/payments/safepay/webhook', express.raw({ type: 'application/json' }));
-
 app.use(express.json({ limit: '10mb' }));
 
 app.use('/uploads', express.static(uploadsDir));
