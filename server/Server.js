@@ -20,11 +20,17 @@ import checkoutRouter from './src/routes/checkout.js';
 import userContact from './src/routes/user/Contact.js'; // ✅ PUBLIC ROUTES (contact form etc.)
 import adminContact from './src/routes/admin/Contact.js'; // ✅ ADMIN CONTACT ROUTES (view/delete messages)
 import adminUsers from './src/routes/admin/User.js'; // ✅ ADMIN USER MANAGEMENT
+import sizeChartRoutes from './src/routes/sizeChartRoutes.js';
+import paymentRoutes from './src/routes/Payment.js';
+
+
+
 
 
 import Product from './src/model/Product.js';
 
 dotenv.config();
+
 
 const app = express();
 
@@ -70,6 +76,11 @@ app.use('/api/checkout', checkoutRouter);
 app.use('/api/banners', userBanner);
 app.use('/api/categories', userCategory);
 app.use('/api/contacts', userContact);
+app.use('/api/size-charts', sizeChartRoutes);
+
+
+
+app.use('/api/payments', paymentRoutes);
 
 
 // ================== HEALTH CHECK ==================

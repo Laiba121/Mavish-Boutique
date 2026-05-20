@@ -72,10 +72,10 @@ export default function OrderConfirmationPage() {
           </div>
 
           {/* Bank deposit notice */}
-          {order?.paymentMethod === 'bank' && (
+          {order?.advanceMethod === 'bank' && (
             <div className="bg-amber-50 border border-amber-200 rounded p-4 mb-4 text-sm text-amber-800">
               <strong className="block mb-1">Bank Transfer Required</strong>
-              Please transfer <strong>Rs {order.total?.toLocaleString()}.00</strong> to our bank account
+              Please transfer <strong>Rs {order.advanceAmount?.toLocaleString()}.00</strong> to our bank account
               using <strong>{orderNumber}</strong> as the payment reference. Your order will ship once payment clears.
             </div>
           )}

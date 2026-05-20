@@ -53,7 +53,33 @@ const productSchema = new mongoose.Schema({
   careInstructions: [{ type: String }],
   disclaimer: { type: String },
   createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+// ── Replace the sizeChartType field in your Product.js schema with this ──
+
+sizeChartType: {
+  type: String,
+  enum: [
+    // Kids Girls
+    'kids_girls_frock',
+    'kids_girls_shalwar_kameez',
+    'kids_girls_lehenga',
+    'kids_girls_maxi',
+    'kids_girls_coat_suit',
+    // Women
+    'women_shalwar_kameez',
+    'women_maxi',
+    'women_lehenga',
+    'women_frock',
+    'women_gown',
+    'women_coat_suit',
+    'women_kaftan',
+    'women_palazzo_suit',
+    // Men
+    'men_standard',
+    'men_western',
+  ],
+  default: null,
+},
 });
 
 productSchema.pre('save', async function () {

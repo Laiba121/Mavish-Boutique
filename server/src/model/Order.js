@@ -66,6 +66,15 @@ const orderSchema = new mongoose.Schema({
     default: 'pending',
   },
 
+  payment: {
+    payfastBasketId: { type: String, index: true },
+    payfastToken:    { type: String },
+    payfastTxnId:    { type: String },
+    payfastMethod:   { type: String },
+    payfastErrCode:  { type: String },
+    payfastErrMsg:   { type: String },
+  },
+
   // ── Order status ──────────────────────────────────────
   status: {
     type: String,

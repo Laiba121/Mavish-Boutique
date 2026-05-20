@@ -48,7 +48,6 @@ function advanceMethodLabel(method) {
 function advanceInstructions(order) {
   const amt = order.advanceAmount?.toLocaleString() ?? '—';
 
-  // ── Read payment details from environment variables ──────────────────────
   const easypaisaNumber = process.env.EASYPAISA_NUMBER || '0300-XXXXXXX';
   const easypaisaName   = process.env.EASYPAISA_NAME   || 'Mehrma Boutique';
   const jazzcashNumber  = process.env.JAZZCASH_NUMBER  || '0300-XXXXXXX';
@@ -203,6 +202,152 @@ export async function sendOrderConfirmation(order) {
     from:    `"Mehrma Boutique" <${process.env.EMAIL_USER}>`,
     to:      order.email,
     subject: `Order Confirmed – ${order.orderNumber}`,
+    html,
+  });
+}
+
+/**
+ * Send a bank deposit alert to the admin when a customer selects Bank Transfer.
+ * Admin must manually verify the transfer and mark the order as paid.
+ * @param {Object} order  Mongoose Order document
+ */
+export async function sendBankDepositAlert(order) {
+  const bankName    = process.env.BANK_NAME           || 'HBL';
+  const bankTitle   = process.env.BANK_ACCOUNT_TITLE  || 'Mehrma Boutique';
+  const bankAccount = process.env.BANK_ACCOUNT_NUMBER || '0123-4567890-001';
+  const bankIban    = process.env.BANK_IBAN            || 'PK36HABB0000000000000000';
+  const adminEmail  = process.env.ADMIN_EMAIL          || process.env.EMAIL_USER;
+
+  const advanceAmt = order.advanceAmount?.toLocaleString() ?? '—';
+  const codAmt     = order.codAmount?.toLocaleString()     ?? '—';
+
+  const itemRows = order.items.map((i) => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:14px;">
+        ${i.name}${i.size ? ` <span style="color:#888;font-size:12px;">(${i.size})</span>` : ''}
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;font-size:14px;">${i.quantity}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-size:14px;">
+        Rs ${(i.price * i.quantity).toLocaleString()}.00
+      </td>
+    </tr>`).join('');
+
+  const html = wrapper(`
+    <h2 style="font-family:Georgia,serif;color:#2c2c2c;margin:0 0 8px;">⚠️ Bank Deposit Pending</h2>
+    <p style="color:#555;font-size:15px;line-height:1.6;">
+      A customer has placed an order and selected <strong>Bank Transfer</strong> as their payment method.
+      Please verify the deposit in your bank account, then mark the order as paid in the admin panel.
+    </p>
+
+    <!-- Alert banner -->
+    <div style="background:#fff8e1;border-left:4px solid #f0a500;padding:14px 16px;margin:20px 0;font-size:14px;color:#7a5c00;">
+      <strong>Action required:</strong> Verify that <strong>Rs ${advanceAmt}.00</strong> has been transferred
+      with reference <strong>${order.orderNumber}</strong>, then update payment status to
+      <em>advance_confirmed</em>.
+    </div>
+
+    <!-- Order info -->
+    <p style="font-size:13px;color:#888;margin-bottom:2px;">Order number</p>
+    <p style="font-size:18px;font-weight:700;color:${brandColor};margin:0 0 20px;">${order.orderNumber}</p>
+
+    <!-- Customer details -->
+    <table width="100%" style="border-collapse:collapse;margin:0 0 20px;background:#f9f9fb;border-radius:4px;overflow:hidden;">
+      <tr style="background:#2b3a7a;">
+        <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+          Customer Details
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:9px 16px;font-size:13px;color:#555;width:40%;">Name</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${order.shippingAddress.firstName} ${order.shippingAddress.lastName}</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td style="padding:9px 16px;font-size:13px;color:#555;">Email</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${order.email}</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 16px;font-size:13px;color:#555;">Phone</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${order.shippingAddress.phone}</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td style="padding:9px 16px;font-size:13px;color:#555;">City</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${order.shippingAddress.city}</td>
+      </tr>
+    </table>
+
+    <!-- Payment amounts -->
+    <table width="100%" style="border-collapse:collapse;margin:0 0 20px;background:#f9f9fb;border-radius:4px;overflow:hidden;">
+      <tr style="background:#2b3a7a;">
+        <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+          Payment Breakdown
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:9px 16px;font-size:13px;color:#555;">Order Total</td>
+        <td style="padding:9px 16px;font-size:13px;text-align:right;font-weight:700;">Rs ${order.total.toLocaleString()}.00</td>
+      </tr>
+      <tr style="background:#fff8e1;">
+        <td style="padding:9px 16px;font-size:13px;color:#7a5c00;"><strong>Advance to verify (bank deposit)</strong></td>
+        <td style="padding:9px 16px;font-size:15px;text-align:right;font-weight:700;color:#7a5c00;">Rs ${advanceAmt}.00</td>
+      </tr>
+      <tr style="background:#f0f9f4;">
+        <td style="padding:9px 16px;font-size:13px;color:#2a7a4f;">Cash on Delivery (collect at door)</td>
+        <td style="padding:9px 16px;font-size:13px;text-align:right;font-weight:700;color:#2a7a4f;">Rs ${codAmt}.00</td>
+      </tr>
+    </table>
+
+    <!-- Your bank details -->
+    <table width="100%" style="border-collapse:collapse;margin:0 0 20px;background:#f9f9fb;border-radius:4px;overflow:hidden;">
+      <tr style="background:#2b3a7a;">
+        <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+          Your Bank Account (for reference)
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:9px 16px;font-size:13px;color:#555;width:40%;">Bank</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${bankName}</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td style="padding:9px 16px;font-size:13px;color:#555;">Account Title</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${bankTitle}</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 16px;font-size:13px;color:#555;">Account Number</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${bankAccount}</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td style="padding:9px 16px;font-size:13px;color:#555;">IBAN</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:600;">${bankIban}</td>
+      </tr>
+      <tr>
+        <td style="padding:9px 16px;font-size:13px;color:#555;">Expected Reference</td>
+        <td style="padding:9px 16px;font-size:13px;font-weight:700;color:${brandColor};">${order.orderNumber}</td>
+      </tr>
+    </table>
+
+    <!-- Order items -->
+    <table width="100%" style="border-collapse:collapse;margin:0 0 8px;">
+      <thead>
+        <tr style="background:#f5f5f5;">
+          <th style="padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;">Item</th>
+          <th style="padding:10px 12px;text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;">Qty</th>
+          <th style="padding:10px 12px;text-align:right;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;">Price</th>
+        </tr>
+      </thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+
+    <p style="font-size:12px;color:#aaa;margin-top:24px;line-height:1.6;">
+      This is an automated alert. Once you confirm the bank transfer, update the order in your admin panel:
+      <strong>Orders → #${order.orderNumber} → Payment Status → advance_confirmed</strong>.
+    </p>
+  `);
+
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from:    `"Mehrma Boutique" <${process.env.EMAIL_USER}>`,
+    to:      adminEmail,
+    subject: `⚠️ Bank Deposit Pending – ${order.orderNumber} (Rs ${advanceAmt}.00)`,
     html,
   });
 }

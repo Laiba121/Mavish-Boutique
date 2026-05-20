@@ -35,7 +35,6 @@ function initializeGoogleButton(buttonId, onCredential) {
     window.google.accounts.id.renderButton(button, {
       theme: 'outline',
       size: 'large',
-      width: 320,
       text: 'signin_with',
       shape: 'rectangular',
       logo_alignment: 'left',
@@ -89,6 +88,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [show, setShow] = useState(false);
   const [fieldErr, setFieldErr] = useState({});
+
 
   /* redirect on login */
   useEffect(() => {
@@ -299,9 +299,9 @@ export default function LoginPage() {
 
           <p className="text-center text-xs text-gray-400 mt-8 leading-relaxed">
             By signing in you agree to our{' '}
-            <Link to="/terms" className="underline hover:text-pink-600">Terms of Service</Link>{' '}
+            <Link to="/terms-of-service" className="underline hover:text-pink-600">Terms of Service</Link>{' '}
             and{' '}
-            <Link to="/privacy" className="underline hover:text-pink-600">Privacy Policy</Link>.
+            <Link to="/privacy-policy" className="underline hover:text-pink-600">Privacy Policy</Link>.
           </p>
         </div>
       </div>

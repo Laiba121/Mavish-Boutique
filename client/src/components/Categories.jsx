@@ -3,32 +3,11 @@ import { Link } from 'react-router-dom';
 import api from '../utils/api';
 
 const FALLBACK_CATEGORIES = [
-  {
-    _id: '1',
-    name: 'Boys',
-    image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=700&q=80',
-    comingSoon: false,
-  },
-  {
-    _id: '2',
-    name: 'Girls',
-    image: 'https://images.unsplash.com/photo-1617627143233-95c86f4a6e1e?w=700&q=80',
-    comingSoon: false,
-  },
-  {
-    _id: '3',
-    name: 'Men',
-    image: 'https://images.unsplash.com/photo-1495121605193-b116b5b9c5d9?w=700&q=80',
-    comingSoon: false,
-  },
-  {
-    _id: '4',
-    name: 'Women',
-    image: 'https://images.unsplash.com/photo-1564836235481-71ce9728b7d0?w=700&q=80',
-    comingSoon: false,
-  },
+  { _id: '1', name: 'Boys',  link: '/boys',  image: '...' },
+  { _id: '2', name: 'Girls', link: '/girls', image: '...' },
+  { _id: '3', name: 'Men',   link: '/men',   image: '...' },
+  { _id: '4', name: 'Women', link: '/women', image: '...' },
 ];
-
 export default function ShopByCategory() {
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
 
@@ -38,10 +17,19 @@ export default function ShopByCategory() {
       const data = Array.isArray(res.data) ? res.data : [];
 
       if (data.length > 0) {
+
+        const slugMap = {
+          boys: '/boys',
+          girls: '/girls',
+          men: '/men',
+          women: '/women',
+          womens: '/women',
+        };
+
         setCategories(
           data.map(cat => ({
             ...cat,
-            link: `/category/${cat.slug || cat._id}`,
+            link: slugMap[cat.name.toLowerCase()] || `/${cat.name.toLowerCase()}`,
             comingSoon: false,
           }))
         );

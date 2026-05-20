@@ -1,49 +1,73 @@
 import Product from "../model/Product.js";
 
 //
-// ─── GET PRODUCTS (PUBLIC / ADMIN BOTH) ─────────────
+// ─── GET PRODUCTS ─────────────────────────────
 //
 export const getProducts = async (req, res) => {
   try {
-    const { category, trending, newArrival, sale, collection, limit } = req.query;
+    const query = {};
 
-    const filter = {};
+    // ✅ FILTER BY CATEGORY ID
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
 
-    if (category) filter.category = category;
-    if (trending === "true") filter.isTrending = true;
-    if (newArrival === "true") filter.isNewArrival = true;
-    if (sale === "true") filter.isSale = true;
-    if (collection) filter.productCollection = collection;
+    // ✅ SEARCH by name (case-insensitive, partial match)
+    if (req.query.search) {
+      query.name = { $regex: req.query.search, $options: "i" };
+    }
 
-    let query = Product.find(filter)
-      .populate("category")
-      .sort({ createdAt: -1 });
+    // ✅ FILTER NEW ARRIVALS
+    if (req.query.newArrival === "true") {
+      query.isNewArrival = true;
+    }
 
-    if (limit) query = query.limit(parseInt(limit));
+    // ✅ FILTER SALE ITEMS
+    if (req.query.sale === "true") {
+      query.isSale = true;
+    }
 
-    const products = await query;
+   // ✅ ADD THIS: COLLECTION FILTER
+    if (req.query.collection) {
+      query.productCollection = req.query.collection;
+    }
+
+    // ✅ ONLY ACTIVE PRODUCTS
+    query.status = "active";
+
+    // ✅ LIMIT
+    const limit = Number(req.query.limit) || 0;
+
+    const products = await Product.find(query)
+      .populate("category", "_id name")
+      .sort({ createdAt: -1 })
+      .limit(limit);
 
     res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 //
-// ─── GET SINGLE PRODUCT ────────────────────────────
+// ─── GET SINGLE PRODUCT ───────────────────────
 //
 export const getSingleProduct = async (req, res) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug })
-      .populate("category");
+    const product = await Product.findOne({
+      slug: req.params.slug,
+    }).populate("category", "_id name");
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
     res.json(product);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -66,24 +90,21 @@ export const createProduct = async (req, res) => {
 };
 
 //
-// ─── UPDATE PRODUCT (FIXED 🔥) ─────────────────────
+// ─── UPDATE PRODUCT ─────────────────────────────────
 //
 export const updateProduct = async (req, res) => {
   try {
     let data = { ...req.body };
 
-    // ❌ remove invalid fields
     delete data.slug;
     if (!data.sku) delete data.sku;
 
-    // ✅ remove empty fields (VERY IMPORTANT)
     Object.keys(data).forEach((key) => {
       if (data[key] === "" || data[key] === undefined) {
         delete data[key];
       }
     });
 
-    // ✅ ensure images are valid URLs only
     if (Array.isArray(data.images)) {
       data.images = data.images.filter(
         (img) => typeof img === "string" && img.startsWith("http")
