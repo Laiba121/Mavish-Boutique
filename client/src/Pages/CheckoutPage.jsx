@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { ShoppingBag, ChevronDown, Lock, HelpCircle, CreditCard } from 'lucide-react';
+import { ShoppingBag, ChevronDown, Lock, HelpCircle, CreditCard, Upload, X } from 'lucide-react';
 import { clearCart } from '../store/cartSlice';
 
 const BANK_NAME    = import.meta.env.VITE_BANK_NAME              || 'HBL';
 const BANK_TITLE   = import.meta.env.VITE_BANK_ACCOUNT_TITLE     || 'Mehrma Boutique';
 const BANK_ACCOUNT = import.meta.env.VITE_BANK_ACCOUNT_NUMBER    || '0123-4567890-001';
 const BANK_IBAN    = import.meta.env.VITE_BANK_IBAN              || 'PK36HABB0000000000000000';
+const EASYPAISA_NAME = import.meta.env.VITE_EASYPAISA_NAME || 'Mehrma Boutique';
+const EASYPAISA_ACCOUNT = import.meta.env.VITE_EASYPAISA_ACCOUNT || '03001234567';
+const JAZZCASH_NAME = import.meta.env.VITE_JAZZCASH_NAME || 'Mehrma Boutique';
+const JAZZCASH_ACCOUNT = import.meta.env.VITE_JAZZCASH_ACCOUNT || '03009876543';
 const API_URL      = import.meta.env.VITE_API_URL                || 'http://localhost:5000/api';
 
 function detectBrand(n) {
@@ -43,6 +47,8 @@ export default function CheckoutPage() {
   const [cardErrors, setCardErrors] = useState({});
   const [loading, setLoading]       = useState(false);
   const [apiError, setApiError]     = useState('');
+  const [screenshotFile, setScreenshotFile] = useState(null);
+  const [screenshotPreview, setScreenshotPreview] = useState(null);
 
   // ── Prefill user data ──
   useEffect(() => {
@@ -90,6 +96,31 @@ export default function CheckoutPage() {
   };
   const cardBrand = detectBrand(form.cardNumber);
 
+  const handleScreenshotChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setApiError('Please upload an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setApiError('File size must be less than 5MB');
+        return;
+      }
+      setScreenshotFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeScreenshot = () => {
+    setScreenshotFile(null);
+    setScreenshotPreview(null);
+  };
+
   function validateCard() {
     const errors = {};
     if (!form.cardNumber.replace(/\s/g, '') || form.cardNumber.replace(/\s/g, '').length < 15)
@@ -107,25 +138,6 @@ export default function CheckoutPage() {
   const labelCls = "block text-xs text-gray-500 mb-1 font-medium";
   const errCls   = "text-xs text-red-500 mt-1";
 
-  function submitPayfastForm(actionUrl, fields) {
-    const paymentForm = document.createElement('form');
-    paymentForm.method = 'POST';
-    paymentForm.action = actionUrl;
-    paymentForm.style.display = 'none';
-
-    Object.entries(fields || {}).forEach(([name, value]) => {
-      if (value === undefined || value === null || value === '') return;
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = name;
-      input.value = String(value);
-      paymentForm.appendChild(input);
-    });
-
-    document.body.appendChild(paymentForm);
-    paymentForm.submit();
-  }
-
   // ── SUBMIT ────────────────────────────────────────────────────────────────
   async function handleSubmit() {
     setApiError('');
@@ -134,47 +146,64 @@ export default function CheckoutPage() {
       setApiError('Please fill in all required delivery fields.');
       return;
     }
-    // Note: for card payments, PayFast collects card details on their hosted
-    // checkout page — we do NOT collect card data here (PCI compliant).
-    // The card fields shown below are purely for UX preview; they are NOT sent.
-    if (['easypaisa', 'jazzcash'].includes(form.advanceMethod) && !form.mobileNumber) {
-      setApiError(`Please enter your ${form.advanceMethod === 'easypaisa' ? 'EasyPaisa' : 'JazzCash'} mobile number.`);
-      return;
-    }
+    
     if (form.billingOption === 'different') {
       if (!form.billFirstName || !form.billLastName || !form.billAddress || !form.billCity || !form.billPhone) {
-        setApiError('Please fill complete billing address.'); return;
+        setApiError('Please fill complete billing address.'); 
+        return;
       }
+    }
+    
+    // Screenshot is required for manual payment
+    if (!screenshotFile) {
+      setApiError('Please upload a payment screenshot to confirm order.');
+      return;
     }
 
     setLoading(true);
 
-    // ⚠️  Never send card fields to our server — PayFast handles card data
-    const payload = {
-      email: form.email, firstName: form.firstName, lastName: form.lastName,
-      address: form.address, apartment: form.apartment, city: form.city,
-      postalCode: form.postalCode, phone: form.phone, saveInfo: form.saveInfo,
-      shippingMethod: 'Standard', shippingCost: 380,
-      paymentMethod: 'hybrid_cod', advanceMethod: form.advanceMethod,
-      advanceAmount: advance, codAmount: cod,
-      billingOption: form.billingOption,
-      billFirstName: form.billFirstName, billLastName: form.billLastName,
-      billAddress: form.billAddress, billApartment: form.billApartment,
-      billCity: form.billCity, billPostal: form.billPostal, billPhone: form.billPhone,
-      ...((['easypaisa', 'jazzcash'].includes(form.advanceMethod)) && { mobileNumber: form.mobileNumber }),
-      items: items.map(i => ({
-        productId: i._id, name: i.name, image: i.images?.[0] || '',
-        size: i.size, price: i.isSale && i.salePrice ? i.salePrice : i.price,
-        quantity: i.quantity,
-      })),
-    };
-
     try {
-      const headers = { 'Content-Type': 'application/json' };
+      // Use FormData for file upload
+      const formData = new FormData();
+      
+      const payload = {
+        email: form.email, firstName: form.firstName, lastName: form.lastName,
+        address: form.address, apartment: form.apartment, city: form.city,
+        postalCode: form.postalCode, phone: form.phone, saveInfo: form.saveInfo,
+        shippingMethod: 'Standard', shippingCost: 380,
+        paymentMethod: 'hybrid_cod', advanceMethod: form.advanceMethod,
+        advanceAmount: advance, codAmount: cod,
+        billingOption: form.billingOption,
+        billFirstName: form.billFirstName, billLastName: form.billLastName,
+        billAddress: form.billAddress, billApartment: form.billApartment,
+        billCity: form.billCity, billPostal: form.billPostal, billPhone: form.billPhone,
+        items: items.map(i => ({
+          productId: i._id, name: i.name, image: i.images?.[0] || '',
+          size: i.size, price: i.isSale && i.salePrice ? i.salePrice : i.price,
+          quantity: i.quantity,
+        })),
+      };
+
+      Object.entries(payload).forEach(([key, value]) => {
+        if (key === 'items') {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
+      });
+      formData.append('screenshot', screenshotFile);
+
+      const headers = {};
       if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
       if (user?._id)   headers['x-user-id']     = user._id;
 
-      const res  = await fetch(`${API_URL}/checkout`, { method: 'POST', headers, credentials: 'include', body: JSON.stringify(payload) });
+      const res = await fetch(`${API_URL}/checkout`, { 
+        method: 'POST', 
+        headers, 
+        credentials: 'include', 
+        body: formData 
+      });
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -185,19 +214,12 @@ export default function CheckoutPage() {
 
       localStorage.setItem('guestEmail', form.email);
 
-      // ── BANK TRANSFER — go straight to confirmation ──
-      if (data.paymentType === 'bank_transfer' || data.paymentType === 'manual') {
+      // ── SCREENSHOT PENDING — order confirmed, awaiting manual verification ──
+      if (data.paymentType === 'screenshot_pending' || data.paymentType === 'manual') {
         dispatch(clearCart());
         navigate(`/order-confirmation/${data.orderId}`, {
-          state: { orderNumber: data.orderNumber, paymentType: data.paymentType }
+          state: { orderNumber: data.orderNumber, paymentType: 'screenshot_pending' }
         });
-        return;
-      }
-
-      // ── PAYFAST FORM POST — submit browser to PayFast hosted checkout ──
-      if (data.paymentType === 'payfast_form' && data.payfast?.actionUrl) {
-        dispatch(clearCart());
-        submitPayfastForm(data.payfast.actionUrl, data.payfast.fields);
         return;
       }
 
@@ -216,7 +238,6 @@ export default function CheckoutPage() {
     { id: 'card',      label: 'Debit / Credit Card' },
     { id: 'easypaisa', label: 'EasyPaisa' },
     { id: 'jazzcash',  label: 'JazzCash' },
-    { id: 'bank',      label: 'Bank Transfer' },
   ];
 
   // ── MAIN CHECKOUT FORM ────────────────────────────────────────────────
@@ -320,7 +341,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <p className="text-sm font-medium text-gray-700 mb-2">Choose how to pay the advance:</p>
+              <p className="text-sm font-medium text-gray-700 mb-2">Choose payment method:</p>
               <div className="border border-gray-300 rounded overflow-hidden divide-y divide-gray-200">
                 {advanceMethods.map(({ id, label }) => (
                   <div key={id}>
@@ -341,73 +362,65 @@ export default function CheckoutPage() {
                         checked={form.advanceMethod === id} onChange={set('advanceMethod')} className="sr-only" />
                     </label>
 
-                    {/* ── CARD INFO (no card fields — PayFast collects securely on their page) ── */}
+                    {/* ── CARD PAYMENT - Manual Bank Transfer ── */}
                     {form.advanceMethod === 'card' && id === 'card' && (
                       <div className="px-4 pb-4 pt-3 bg-gray-50">
-                        <div className="bg-white border border-blue-100 rounded p-3 flex items-start gap-3">
-                          <Lock size={16} className="text-green-500 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="text-sm font-semibold text-gray-800 mb-0.5">Secure Card Payment via PayFast</p>
-                            <p className="text-xs text-gray-500 leading-relaxed">
-                              After clicking "Pay now", you'll be taken to PayFast's secure hosted checkout to enter your card details.
-                              Your card information is never shared with us.
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" className="h-4 object-contain" />
-                              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-4 object-contain" />
-                              <span className="text-xs text-gray-400">· PCI DSS Certified</span>
-                            </div>
+                        <div className="bg-white border border-blue-100 rounded p-3 text-sm text-gray-700 space-y-2">
+                          <p className="font-semibold text-blue-800">Transfer Amount: <strong>Rs {advance.toLocaleString()}.00</strong></p>
+                          <div className="border-t border-gray-200 pt-2 space-y-1">
+                            <p>🏦 <strong>Bank:</strong> {BANK_NAME}</p>
+                            <p>👤 <strong>Account Title:</strong> {BANK_TITLE}</p>
+                            <p>🔢 <strong>Account No:</strong> {BANK_ACCOUNT}</p>
+                            <p>🌐 <strong>IBAN:</strong> {BANK_IBAN}</p>
                           </div>
+                          <p className="text-xs text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            ⚠️ Transfer the exact amount and upload payment screenshot for verification.
+                          </p>
                         </div>
                       </div>
                     )}
 
-                    {/* ── EASYPAISA ── */}
+                    {/* ── EASYPAISA - Manual Bank Transfer ── */}
                     {form.advanceMethod === 'easypaisa' && id === 'easypaisa' && (
-                      <div className="px-4 pb-4 pt-3 bg-gray-50 space-y-3">
-                        <div className="bg-white border border-green-200 rounded p-3 text-sm text-gray-700">
-                          <p className="font-semibold text-green-800 mb-1">Pay via EasyPaisa</p>
-                          <p className="text-xs text-gray-500">
-                            After clicking "Pay now", you'll be redirected to PayFast's secure page to complete your EasyPaisa payment.
-                          </p>
-                        </div>
-                        <div>
-                          <label className={labelCls}>EasyPaisa mobile number <span className="text-red-400">*</span></label>
-                          <input value={form.mobileNumber} onChange={set('mobileNumber')}
-                            placeholder="03XX-XXXXXXX" className={inputCls} />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── JAZZCASH ── */}
-                    {form.advanceMethod === 'jazzcash' && id === 'jazzcash' && (
-                      <div className="px-4 pb-4 pt-3 bg-gray-50 space-y-3">
-                        <div className="bg-white border border-orange-200 rounded p-3 text-sm text-gray-700">
-                          <p className="font-semibold text-orange-800 mb-1">Pay via JazzCash</p>
-                          <p className="text-xs text-gray-500">
-                            After clicking "Pay now", you'll be redirected to PayFast's secure page to complete your JazzCash payment.
-                          </p>
-                        </div>
-                        <div>
-                          <label className={labelCls}>JazzCash mobile number <span className="text-red-400">*</span></label>
-                          <input value={form.mobileNumber} onChange={set('mobileNumber')}
-                            placeholder="03XX-XXXXXXX" className={inputCls} />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ── BANK TRANSFER ── */}
-                    {form.advanceMethod === 'bank' && id === 'bank' && (
                       <div className="px-4 pb-4 pt-3 bg-gray-50">
-                        <div className="bg-white border border-yellow-200 rounded p-3 text-sm text-gray-700 space-y-1">
-                          <p className="font-semibold text-yellow-800 mb-2">Bank Transfer Details:</p>
-                          <p>🏦 <strong>Bank:</strong> {BANK_NAME}</p>
-                          <p>👤 <strong>Account Title:</strong> {BANK_TITLE}</p>
-                          <p>🔢 <strong>Account No:</strong> {BANK_ACCOUNT}</p>
-                          <p>🌐 <strong>IBAN:</strong> {BANK_IBAN}</p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Transfer <strong>Rs {advance.toLocaleString()}.00</strong> and use your <strong>Order ID</strong> as reference.
-                            We'll send you a confirmation email once we verify the deposit.
+                        <div className="bg-white border border-green-200 rounded p-3 text-sm text-gray-700 space-y-2">
+                          <p className="font-semibold text-green-800">Transfer Amount: <strong>Rs {advance.toLocaleString()}.00</strong></p>
+                          <div className="border-t border-gray-200 pt-2 space-y-1">
+                            <p>📱 <strong>EasyPaisa Account Name:</strong> {EASYPAISA_NAME}</p>
+                            <p>📲 <strong>EasyPaisa Account Number:</strong> {EASYPAISA_ACCOUNT}</p>
+                          </div>
+                          <div className="border-t border-gray-200 pt-2 space-y-1">
+                            <p className="font-semibold text-gray-700 text-xs">Or transfer via Bank:</p>
+                            <p>🏦 <strong>Bank:</strong> {BANK_NAME}</p>
+                            <p>👤 <strong>Account Title:</strong> {BANK_TITLE}</p>
+                            <p>🔢 <strong>Account No:</strong> {BANK_ACCOUNT}</p>
+                            <p>🌐 <strong>IBAN:</strong> {BANK_IBAN}</p>
+                          </div>
+                          <p className="text-xs text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            ⚠️ Transfer the exact amount and upload payment screenshot for verification.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── JAZZCASH - Manual Bank Transfer ── */}
+                    {form.advanceMethod === 'jazzcash' && id === 'jazzcash' && (
+                      <div className="px-4 pb-4 pt-3 bg-gray-50">
+                        <div className="bg-white border border-orange-200 rounded p-3 text-sm text-gray-700 space-y-2">
+                          <p className="font-semibold text-orange-800">Transfer Amount: <strong>Rs {advance.toLocaleString()}.00</strong></p>
+                          <div className="border-t border-gray-200 pt-2 space-y-1">
+                            <p>📱 <strong>JazzCash Account Name:</strong> {JAZZCASH_NAME}</p>
+                            <p>📲 <strong>JazzCash Account Number:</strong> {JAZZCASH_ACCOUNT}</p>
+                          </div>
+                          <div className="border-t border-gray-200 pt-2 space-y-1">
+                            <p className="font-semibold text-gray-700 text-xs">Or transfer via Bank:</p>
+                            <p>🏦 <strong>Bank:</strong> {BANK_NAME}</p>
+                            <p>👤 <strong>Account Title:</strong> {BANK_TITLE}</p>
+                            <p>🔢 <strong>Account No:</strong> {BANK_ACCOUNT}</p>
+                            <p>🌐 <strong>IBAN:</strong> {BANK_IBAN}</p>
+                          </div>
+                          <p className="text-xs text-gray-500 bg-yellow-50 p-2 rounded border border-yellow-100">
+                            ⚠️ Transfer the exact amount and upload payment screenshot for verification.
                           </p>
                         </div>
                       </div>
@@ -416,9 +429,53 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* ── SCREENSHOT UPLOAD FOR PAYMENT VERIFICATION ── */}
+              <div className="mt-4 bg-purple-50 border border-purple-300 rounded p-4">
+                <div className="flex items-start gap-3">
+                  <Upload size={16} className="text-purple-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-purple-800 mb-1">Upload Payment Screenshot <span className="text-red-500">*</span></p>
+                    <p className="text-xs text-purple-700 mb-3">
+                      Upload a screenshot of your payment (bank transfer, EasyPaisa, JazzCash, or Card payment) for verification. 
+                      Admin will confirm and process your order within 24 hours.
+                    </p>
+                    
+                    {screenshotPreview ? (
+                      <div className="relative inline-block">
+                        <img src={screenshotPreview} alt="Screenshot preview" className="max-w-xs h-auto rounded border border-purple-200" />
+                        <button 
+                          type="button"
+                          onClick={removeScreenshot}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="relative block">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleScreenshotChange}
+                          className="hidden"
+                        />
+                        <div className="border-2 border-dashed border-purple-300 rounded p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-100/30 transition">
+                          <Upload size={24} className="text-purple-400 mx-auto mb-2" />
+                          <p className="text-xs font-medium text-purple-700">Click to upload payment screenshot</p>
+                          <p className="text-[10px] text-purple-500 mt-1">JPG, PNG, GIF up to 5MB</p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-3 bg-green-50 border border-green-200 rounded px-4 py-3 text-sm text-green-800 flex items-start gap-2">
                 <span className="text-lg leading-none">🚚</span>
-                <span>The remaining <strong>Rs {cod.toLocaleString()}.00</strong> will be collected in cash on delivery.</span>
+                <div>
+                  <p className="font-semibold">Cash on Delivery (COD)</p>
+                  <p className="text-xs mt-1">The remaining <strong>Rs {cod.toLocaleString()}.00</strong> will be collected in cash when your order is delivered.</p>
+                </div>
               </div>
             </section>
 
@@ -479,7 +536,7 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <button type="button" onClick={handleSubmit} disabled={loading || items.length === 0}
+            <button type="button" onClick={handleSubmit} disabled={loading || items.length === 0 || !screenshotFile}
               className="w-full py-3.5 bg-[#2b3a7a] hover:bg-[#1e2d63] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold uppercase tracking-widest rounded transition flex items-center justify-center gap-2">
               {loading ? (
                 <>
@@ -490,9 +547,7 @@ export default function CheckoutPage() {
                   Processing…
                 </>
               ) : (
-                form.advanceMethod === 'bank'
-                  ? `Place Order — Rs ${advance.toLocaleString()} via Bank Transfer`
-                  : `Pay Rs ${advance.toLocaleString()} now & confirm order`
+                `Confirm Order & Submit Payment (Rs ${advance.toLocaleString()}.00)`
               )}
             </button>
 

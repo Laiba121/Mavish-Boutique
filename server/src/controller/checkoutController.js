@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Order from '../model/Order.js';
 import Product from '../model/Product.js';
 import jwt from 'jsonwebtoken';
+import cloudinary from '../utils/Cloudinary.js';
 import { sendOrderConfirmation, sendBankDepositAlert } from '../utils/Mailer.js';
 
 async function getPayfast() {
@@ -18,7 +19,29 @@ function getApiBase() {
 }
 
 /* ─────────────────────────────────────────────
-   PLACE ORDER + INITIATE PAYFAST PAYMENT
+   UPLOAD SCREENSHOT TO CLOUDINARY
+───────────────────────────────────────────── */
+async function uploadScreenshot(fileBuffer, fileName) {
+  try {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({
+        folder: 'payment-screenshots',
+        resource_type: 'auto',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
+      }, (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      });
+      stream.end(fileBuffer);
+    });
+  } catch (err) {
+    console.error('[uploadScreenshot]', err);
+    throw err;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   PLACE ORDER + HANDLE SCREENSHOT UPLOAD
 ───────────────────────────────────────────── */
 export async function placeOrder(req, res) {
   delete req.body.card; // never store raw card data
@@ -27,6 +50,12 @@ export async function placeOrder(req, res) {
   session.startTransaction();
 
   try {
+    // Parse items if it's JSON string (from FormData)
+    let items = req.body.items;
+    if (typeof items === 'string') {
+      items = JSON.parse(items);
+    }
+
     const {
       email, firstName, lastName, address, apartment,
       city, postalCode, phone, saveInfo,
@@ -34,7 +63,7 @@ export async function placeOrder(req, res) {
       advanceMethod, billingOption,
       billFirstName, billLastName, billAddress,
       billApartment, billCity, billPostal, billPhone,
-      items, note,
+      note,
     } = req.body;
 
     const normalizedEmail = email?.toLowerCase().trim();
@@ -61,9 +90,13 @@ export async function placeOrder(req, res) {
       await session.abortTransaction(); session.endSession();
       return res.status(400).json({ message: 'Cart is empty.' });
     }
-    if (!['card', 'easypaisa', 'jazzcash', 'bank'].includes(advanceMethod)) {
+    if (!['card', 'easypaisa', 'jazzcash'].includes(advanceMethod)) {
       await session.abortTransaction(); session.endSession();
       return res.status(400).json({ message: 'Invalid payment method.' });
+    }
+    if (!req.file) {
+      await session.abortTransaction(); session.endSession();
+      return res.status(400).json({ message: 'Payment screenshot is required.' });
     }
 
     // ── LOAD PRODUCTS ──
@@ -129,6 +162,16 @@ export async function placeOrder(req, res) {
       };
     }
 
+    // ── UPLOAD SCREENSHOT ──
+    let screenshotUrl = null;
+    try {
+      screenshotUrl = await uploadScreenshot(req.file.buffer, req.file.originalname);
+    } catch (err) {
+      console.error('[screenshot upload]', err);
+      await session.abortTransaction(); session.endSession();
+      return res.status(500).json({ message: 'Failed to upload screenshot. Please try again.' });
+    }
+
     // ── CREATE ORDER ──
     const [order] = await Order.create([{
       user:          userId ? new mongoose.Types.ObjectId(userId) : null,
@@ -140,9 +183,13 @@ export async function placeOrder(req, res) {
       advanceMethod,
       advanceAmount,
       codAmount,
-      paymentStatus: 'advance_pending',
+      paymentStatus: 'ss_pending',
       status:        'confirmed',
       note, saveInfo,
+      payment: {
+        screenshotUrl,
+        screenshotUploadedAt: new Date(),
+      },
     }], { session });
 
     await session.commitTransaction();
@@ -153,77 +200,13 @@ export async function placeOrder(req, res) {
 
     const orderId = order._id;
 
-    // ── BANK TRANSFER — send admin alert, no gateway needed ──
-    if (advanceMethod === 'bank') {
-      // Fire-and-forget admin notification
-      sendBankDepositAlert(order).catch(() => {});
-
-      return res.status(201).json({
-        message:     'Order placed successfully',
-        orderId,
-        orderNumber: order.orderNumber,
-        paymentType: 'bank_transfer',
-      });
-    }
-
-    // ── PAYFAST (card / easypaisa / jazzcash) ──
-    const payfast = await getPayfast();
-    if (!payfast) {
-      return res.status(201).json({
-        message:     'Order placed. Payment gateway not configured — admin will contact you.',
-        orderId,
-        orderNumber: order.orderNumber,
-        paymentType: 'manual',
-      });
-    }
-
-    try {
-      const frontendBase = getFrontendBase();
-      const apiBase = getApiBase();
-
-      const { actionUrl, fields, basketId, token } = await payfast.createPayfastPayment({
-        order,
-        amountPKR: advanceAmount,
-        frontendBase,
-        apiBase,
-        req,
-        customer: {
-          email: normalizedEmail,
-          firstName,
-          lastName,
-          address,
-          city,
-          postalCode,
-          phone,
-        },
-      });
-
-      await Order.findByIdAndUpdate(orderId, {
-        'payment.payfastBasketId': basketId,
-        'payment.payfastToken': token,
-      });
-
-      return res.status(201).json({
-        message:      'Order placed successfully',
-        orderId,
-        orderNumber:  order.orderNumber,
-        paymentType:  'payfast_form',
-        payfast: {
-          actionUrl,
-          fields,
-        },
-        advanceMethod,
-      });
-
-    } catch (err) {
-      console.error('[payfast init]', err.message);
-      return res.status(201).json({
-        message:     'Order placed but payment init failed. Please retry payment.',
-        orderId,
-        orderNumber: order.orderNumber,
-        paymentType: 'manual',
-      });
-    }
+    // ── SCREENSHOT RECEIVED — order confirmed, awaiting manual verification ──
+    return res.status(201).json({
+      message:     'Order placed successfully. Payment screenshot received. Admin will verify within 24 hours.',
+      orderId,
+      orderNumber: order.orderNumber,
+      paymentType: 'screenshot_pending',
+    });
 
   } catch (err) {
     try { await session.abortTransaction(); session.endSession(); } catch (_) {}

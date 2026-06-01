@@ -15,6 +15,7 @@ const STATUS_BADGE = {
 const PAYMENT_BADGE = {
   pending: 'bg-yellow-100 text-yellow-800',
   advance_pending: 'bg-orange-100 text-orange-800',
+  ss_pending: 'bg-purple-100 text-purple-800',
   advance_confirmed: 'bg-blue-100 text-blue-800',
   paid: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
@@ -24,6 +25,7 @@ const PAYMENT_BADGE = {
 const PAYMENT_LABEL = {
   pending: 'Pending',
   advance_pending: 'Advance Pending',
+  ss_pending: 'Screenshot Pending',
   advance_confirmed: 'Advance Confirmed',
   paid: 'Paid',
   failed: 'Failed',
@@ -81,6 +83,18 @@ export default function OrdersAdmin() {
       fetchOrders();
     } catch (error) {
       console.error('Error updating payment status:', error);
+    }
+  };
+
+  const handleDelete = async (orderId) => {
+    const ok = window.confirm('Delete this order? This will permanently delete order.');
+    if (!ok) return;
+    try {
+      await api.delete(`/checkout/orders/${orderId}`);
+      fetchOrders();
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Failed to delete order. See console for details.');
     }
   };
 
@@ -176,6 +190,7 @@ export default function OrdersAdmin() {
                 <option value="advance_pending">
                   Advance Pending
                 </option>
+                <option value="ss_pending">Screenshot Pending</option>
                 <option value="advance_confirmed">
                   Advance Confirmed
                 </option>
@@ -251,6 +266,18 @@ export default function OrdersAdmin() {
                   </div>
                 </div>
 
+                {order.payment?.screenshotUrl && (
+                  <div className="mt-3">
+                    <a href={order.payment.screenshotUrl} target="_blank" rel="noreferrer">
+                      <img
+                        src={order.payment.screenshotUrl}
+                        alt="ss"
+                        className="w-36 h-auto rounded-lg border border-gray-200 object-cover"
+                      />
+                    </a>
+                  </div>
+                )}
+
                 {/* Date */}
                 <div className="mt-3 text-xs text-gray-500">
                   {new Date(order.createdAt).toLocaleDateString(
@@ -298,6 +325,7 @@ export default function OrdersAdmin() {
                     <option value="advance_pending">
                       Advance Pending
                     </option>
+                    <option value="ss_pending">Screenshot Pending</option>
                     <option value="advance_confirmed">
                       Advance Confirmed
                     </option>
@@ -311,6 +339,12 @@ export default function OrdersAdmin() {
                     className="w-full bg-[#2b3a7a] hover:bg-[#1f2c60] text-white text-sm font-medium rounded-lg py-2 transition"
                   >
                     View
+                  </button>
+                  <button
+                    onClick={() => handleDelete(order._id)}
+                    className="w-full bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg py-2 transition"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
@@ -481,6 +515,7 @@ export default function OrdersAdmin() {
                           <option value="advance_pending">
                             Advance Pending
                           </option>
+                          <option value="ss_pending">Screenshot Pending</option>
                           <option value="advance_confirmed">
                             Advance Confirmed
                           </option>
@@ -490,6 +525,17 @@ export default function OrdersAdmin() {
                             Refunded
                           </option>
                         </select>
+                        {order.payment?.screenshotUrl && (
+                          <div className="mt-2">
+                            <a href={order.payment.screenshotUrl} target="_blank" rel="noreferrer">
+                              <img
+                                src={order.payment.screenshotUrl}
+                                alt="payment screenshot"
+                                className="w-24 h-auto rounded-md border border-gray-200 object-cover"
+                              />
+                            </a>
+                          </div>
+                        )}
                       </td>
 
                       {/* Date */}
@@ -512,6 +558,12 @@ export default function OrdersAdmin() {
                           className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                         >
                           View
+                        </button>
+                        <button
+                          onClick={() => handleDelete(order._id)}
+                          className="ml-3 text-sm text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -683,6 +735,21 @@ export default function OrdersAdmin() {
                       ] || selectedOrder.paymentStatus}
                     </span>
                   </div>
+                  {selectedOrder.payment?.screenshotUrl && (
+                    <div className="mt-3">
+                      <span className="text-gray-500 text-xs">Payment Screenshot</span>
+
+                      <div className="mt-2">
+                        <a href={selectedOrder.payment.screenshotUrl} target="_blank" rel="noreferrer">
+                          <img
+                            src={selectedOrder.payment.screenshotUrl}
+                            alt="Payment screenshot"
+                            className="w-48 h-auto rounded-lg border border-gray-200 object-cover"
+                          />
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
