@@ -1,4 +1,5 @@
 import express from 'express';
+import multer from 'multer';
 import Order from '../model/Order.js';
 import { placeOrder, getOrder, getUserOrders, attachGuestOrders } from '../controller/checkoutController.js';
 import { trackOrder } from '../controller/trackingController.js';
@@ -6,8 +7,22 @@ import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// ── MULTER SETUP FOR SCREENSHOT UPLOAD ──
+const screenshotStorage = multer.memoryStorage();
+const uploadScreenshot = multer({
+  storage: screenshotStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
+
 // POST /api/checkout
-router.post('/', placeOrder);
+router.post('/', uploadScreenshot.single('screenshot'), placeOrder);
 
 // GET /api/checkout/track
 router.get('/track', trackOrder);
@@ -52,12 +67,12 @@ router.put('/orders/:id', protect, adminOnly, async (req, res) => {
   }
 });
 
-// DELETE /api/checkout/orders/:id — admin soft cancel
+// DELETE /api/checkout/orders/:id — admin permanent delete
 router.delete('/orders/:id', protect, adminOnly, async (req, res) => {
   try {
-    const order = await Order.findByIdAndUpdate(req.params.id, { status: 'cancelled' }, { new: true });
+    const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found.' });
-    res.json({ message: 'Order cancelled.', order });
+    res.json({ message: 'Order deleted permanently.' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

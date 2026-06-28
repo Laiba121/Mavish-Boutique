@@ -476,7 +476,7 @@ export default function ShopPage() {
                             ),
                           })
                         }
-                        className="flex-1 border px-2 py-1 text-sm"
+                        className="flex-1 border w-10 px-2 py-1 text-sm"
                       />
 
                       <span className="text-sm py-1">
@@ -495,7 +495,7 @@ export default function ShopPage() {
                             ),
                           })
                         }
-                        className="flex-1 border px-2 py-1 text-sm"
+                        className="flex-1 border w-2 px-2 py-1 text-sm"
                       />
                     </div>
 

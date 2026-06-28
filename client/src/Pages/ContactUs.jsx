@@ -145,26 +145,20 @@ export default function ContactUs() {
                 <div>
                   <p className="font-semibold text-[#333]">Customer Support:</p>
                   <p>9:00am – 5:00pm</p>
-                  <p>+92 300 100 3187</p>
+                  <p>+92 300 8462848</p>
                 </div>
 
                 <div>
                   <p className="font-semibold text-[#333]">General Information:</p>
                   <p>9:00am – 9:00pm</p>
-                  <p>+92 300 100 3448</p>
+                  <p>+92 300 8462848</p>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <Mail size={18} className="mt-1" />
-                  <p>customercare@mavish.com</p>
+                  <p>mavishboutique1@gmail.com</p>
                 </div>
 
-                <div>
-                  <p>
-                    15-km, Hafizabad Road, Adjacent Qila Marriage Hall, Qila Didar Singh,
-                    Gujranwala
-                  </p>
-                </div>
               </div>
             </div>
           </div>

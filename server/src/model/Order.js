@@ -62,7 +62,8 @@ const orderSchema = new mongoose.Schema({
   paymentStatus: {
     type: String,
     // advance_pending = mobile money sent by customer, waiting for manual confirmation
-    enum: ['pending', 'advance_pending', 'advance_confirmed', 'paid', 'failed', 'refunded'],
+    // ss_pending = screenshot uploaded by customer, waiting for manual confirmation
+    enum: ['pending', 'advance_pending', 'ss_pending', 'advance_confirmed', 'paid', 'failed', 'refunded'],
     default: 'pending',
   },
 
@@ -73,6 +74,8 @@ const orderSchema = new mongoose.Schema({
     payfastMethod:   { type: String },
     payfastErrCode:  { type: String },
     payfastErrMsg:   { type: String },
+    screenshotUrl:   { type: String },  // URL of manual screenshot upload
+    screenshotUploadedAt: { type: Date },
   },
 
   // ── Order status ──────────────────────────────────────
