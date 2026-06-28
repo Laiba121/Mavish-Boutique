@@ -218,7 +218,7 @@ export default function LoginPage() {
                 className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white py-3 px-4 rounded text-sm text-gray-400 cursor-not-allowed"
               >
                 <GoogleIcon />
-                Google Sign-In (configure VITE_GOOGLE_CLIENT_ID)
+                Google Sign-In 
               </button>
             )}
           </div>

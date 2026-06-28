@@ -243,7 +243,7 @@ export default function RegisterPage() {
               <div id="google-btn-register" className="w-full" />
             ) : (
               <button disabled className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white py-3 px-4 rounded text-sm text-gray-400 cursor-not-allowed">
-                <GoogleIcon /> Sign up with Google (configure VITE_GOOGLE_CLIENT_ID)
+                <GoogleIcon /> Sign up with Google 
               </button>
             )}
           </div>
