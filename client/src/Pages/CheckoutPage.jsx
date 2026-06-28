@@ -4,14 +4,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ShoppingBag, ChevronDown, Lock, HelpCircle, CreditCard, Upload, X } from 'lucide-react';
 import { clearCart } from '../store/cartSlice';
 
-const BANK_NAME    = import.meta.env.VITE_BANK_NAME              || 'HBL';
-const BANK_TITLE   = import.meta.env.VITE_BANK_ACCOUNT_TITLE     || 'Mehrma Boutique';
-const BANK_ACCOUNT = import.meta.env.VITE_BANK_ACCOUNT_NUMBER    || '0123-4567890-001';
-const BANK_IBAN    = import.meta.env.VITE_BANK_IBAN              || 'PK36HABB0000000000000000';
+const BANK_NAME    = import.meta.env.VITE_BANK_NAME              || 'Bank Al habib';
+const BANK_TITLE   = import.meta.env.VITE_BANK_ACCOUNT_TITLE     || 'Mahwish latif';
+const BANK_ACCOUNT = import.meta.env.VITE_BANK_ACCOUNT_NUMBER    || '5611-1823002446-011';
+const BANK_IBAN    = import.meta.env.VITE_BANK_IBAN              || 'PK63BAHL561118230024461';
 const EASYPAISA_NAME = import.meta.env.VITE_EASYPAISA_NAME || 'Mehrma Boutique';
 const EASYPAISA_ACCOUNT = import.meta.env.VITE_EASYPAISA_ACCOUNT || '03001234567';
-const JAZZCASH_NAME = import.meta.env.VITE_JAZZCASH_NAME || 'Mehrma Boutique';
-const JAZZCASH_ACCOUNT = import.meta.env.VITE_JAZZCASH_ACCOUNT || '03009876543';
 const API_URL      = import.meta.env.VITE_API_URL                || 'http://localhost:5000/api';
 
 function detectBrand(n) {
@@ -409,8 +407,8 @@ export default function CheckoutPage() {
                         <div className="bg-white border border-orange-200 rounded p-3 text-sm text-gray-700 space-y-2">
                           <p className="font-semibold text-orange-800">Transfer Amount: <strong>Rs {advance.toLocaleString()}.00</strong></p>
                           <div className="border-t border-gray-200 pt-2 space-y-1">
-                            <p>📱 <strong>JazzCash Account Name:</strong> {JAZZCASH_NAME}</p>
-                            <p>📲 <strong>JazzCash Account Number:</strong> {JAZZCASH_ACCOUNT}</p>
+                            <p>📱 <strong>EasyPaisa Account Name:</strong> {EASYPAISA_NAME}</p>
+                            <p>📲 <strong>EasyPaisa Account Number:</strong> {EASYPAISA_ACCOUNT}</p>
                           </div>
                           <div className="border-t border-gray-200 pt-2 space-y-1">
                             <p className="font-semibold text-gray-700 text-xs">Or transfer via Bank:</p>

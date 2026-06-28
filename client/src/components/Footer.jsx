@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaFacebookF, FaInstagram, FaPinterestP, FaYoutube } from 'react-icons/fa';
-import { Ghost, Music2, X } from 'lucide-react';
+import { FaFacebookF, FaInstagram, FaWhatsapp } from 'react-icons/fa';
+import { Music2 } from 'lucide-react';
 
 const socialLinks = [
   {
@@ -22,29 +22,6 @@ const socialLinks = [
     label: 'TikTok',
   },
 
-  {
-    Icon: FaPinterestP,
-    href: '#',
-    label: 'Pinterest',
-  },
-
-  {
-    Icon: Ghost,
-    href: '#',
-    label: 'Snapchat',
-  },
-
-  {
-    Icon: FaYoutube,
-    href: '#',
-    label: 'YouTube',
-  },
-
-  {
-    Icon: X,
-    href: '#',
-    label: 'X',
-  },
 ];
 
 export default function Footer() {
@@ -67,16 +44,20 @@ export default function Footer() {
             Contact Us
           </h4>
           <address className="space-y-3 font-body text-[11px] font-semibold leading-relaxed text-[#c7c7c7] not-italic">
-            <p>15-Km, Hafizabad Road, Adjacent</p>
-            <p>Qila Marriage Hall, Qila Didar Singh,</p>
-            <p>Gujranwala</p>
+
             <p>
-              <a href="mailto:customercare@mavish.com" className="transition-colors hover:text-white">
-                Customercare@Mavish.com
+              <a href="mailto:mavishboutique1@gmail.com" className="transition-colors hover:text-white">
+                mavishboutique1@gmail.com
               </a>
             </p>
-            <p>+92 300 100 3187 (WhatsApp Chat</p>
-            <p>Only)</p>
+            <p><a
+                            href="https://wa.me/+923008462848"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            >                                    
+              +92 300 8462848 (WhatsApp Chat Only)
+              </a>
+            </p>
           </address>
         </div>
 

@@ -57,7 +57,7 @@ export default function CustomizedOrdersSection() {
 
               {/* WhatsApp */}
               <a
-                href="https://wa.me/923001112233"
+                href="https://wa.me/+923008462848"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-rose-200 hover:bg-white text-black transition-all duration-300 px-7 py-3 rounded-full flex items-center gap-2 text-sm tracking-wide font-medium"

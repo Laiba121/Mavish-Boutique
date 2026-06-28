@@ -138,8 +138,8 @@ export default function PaymentPage() {
                 </p>
 
                 <div className="mt-4 space-y-2 text-[15px] font-semibold text-black">
-                  <p>Email: customercare@mavish.com</p>
-                  <p>WhatsApp: +92 300 100 3187</p>
+                  <p>Email: mavishboutique1@gmail.com</p>
+                  <p>WhatsApp: +92 301 7354400</p>
                 </div>
               </div>
             </div>

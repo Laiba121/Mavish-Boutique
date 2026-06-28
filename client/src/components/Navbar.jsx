@@ -108,14 +108,20 @@ function SearchDropdown({ query, onCategoryClick, onProductClick }) {
         <div className="grid grid-cols-4 gap-4">
           {products.map((p) => (
             <button key={p._id} onMouseDown={() => onProductClick(p.slug)} className="text-left group">
-              <div className="relative overflow-hidden bg-gray-100 aspect-square mb-2">
-                {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />}
-                {p.stockStatus === "out_of_stock" && <span className="absolute top-2 left-2 bg-white text-[10px] font-semibold px-2 py-0.5 text-gray-700">Sold Out</span>}
-              </div>
+            <div className="relative overflow-hidden bg-gray-100 aspect-square mb-2">
+  {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />}
+  {p.salePrice && <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-semibold px-2 py-0.5">Sale</span>}
+  {p.stockStatus === "out_of_stock" && <span className="absolute top-2 right-2 bg-white text-[10px] font-semibold px-2 py-0.5 text-gray-700">Sold Out</span>}
+</div>
               <p className="text-[12px] text-gray-800 font-medium leading-tight">{p.name}</p>
-              {p.discountPrice
-                ? <p className="text-[11px] text-rose-600 mt-0.5">Rs. {p.discountPrice.toLocaleString()}</p>
-                : <p className="text-[11px] text-gray-500 mt-0.5">Rs. {p.price?.toLocaleString()}</p>}
+            {p.isSale && p.salePrice
+  ? (
+    <div className="flex items-baseline gap-1.5 mt-0.5">
+      <span className="text-[11px] text-rose-600">Rs. {p.salePrice.toLocaleString()}</span>
+      <span className="text-[10px] text-gray-400 line-through">Rs. {p.price?.toLocaleString()}</span>
+    </div>
+  )
+  : <p className="text-[11px] text-gray-500 mt-0.5">Rs. {p.price?.toLocaleString()}</p>}
             </button>
           ))}
         </div>
@@ -177,13 +183,19 @@ function SearchOverlay({ searchQuery, setSearchQuery, handleSearch, navigate, on
                 {products.map((p) => (
                   <button key={p._id} onMouseDown={() => goProduct(p.slug)} className="group text-left">
                     <div className="relative mb-4 aspect-square overflow-hidden bg-gray-100">
-                      {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />}
-                      {p.stockStatus === "out_of_stock" && <span className="absolute left-1/2 top-0 -translate-x-1/2 bg-white px-3 py-1.5 text-[15px] font-semibold text-neutral-500">Sold Out</span>}
-                    </div>
-                    <p className="text-[16px] font-semibold leading-[1.8] text-black">{p.name}</p>
-                    {p.discountPrice
-                      ? <p className="mt-1.5 text-[16px] text-rose-600">Rs. {p.discountPrice.toLocaleString()}</p>
-                      : <p className="mt-1.5 text-[16px] text-neutral-500">Rs. {p.price?.toLocaleString()}</p>}
+  {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />}
+  {p.salePrice && <span className="absolute top-2 left-2 bg-rose-600 text-white text-[12px] font-semibold px-2.5 py-1">Sale</span>}
+  {p.stockStatus === "out_of_stock" && <span className="absolute left-1/2 top-0 -translate-x-1/2 bg-white px-3 py-1.5 text-[15px] font-semibold text-neutral-500">Sold Out</span>}
+</div>
+<p className="text-[16px] font-semibold leading-[1.8] text-black">{p.name}</p>
+{p.isSale && p.salePrice
+  ? (
+    <div className="flex items-baseline gap-1.5 mt-0.5">
+      <span className="text-[11px] text-rose-600">Rs. {p.salePrice.toLocaleString()}</span>
+      <span className="text-[10px] text-gray-400 line-through">Rs. {p.price?.toLocaleString()}</span>
+    </div>
+  )
+  : <p className="text-[11px] text-gray-500 mt-0.5">Rs. {p.price?.toLocaleString()}</p>}
                   </button>
                 ))}
               </div>
