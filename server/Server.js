@@ -42,9 +42,24 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // ================== MIDDLEWARE ==================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://mavish-frontend.onrender.com",
+  "https://mavishboutique.com",
+  "https://www.mavishboutique.com",
+];
+
 app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 }));
 
 app.use(express.json({ limit: '10mb' }));
