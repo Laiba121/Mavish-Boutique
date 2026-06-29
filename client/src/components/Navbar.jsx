@@ -509,7 +509,7 @@ function MobileNavbar({ cartCount, user, dispatch, navigate, setSearchOpen }) {
           </div>
 
           <Link to="/" className="flex justify-center">
-            <img src="/images/logo.avif" alt="logo" className="h-[42px] object-contain" />
+            <img src="/images/logo1.png" alt="logo" className="h-[42px] object-contain" />
           </Link>
 
           <div className="flex items-center justify-end gap-5 sm:gap-7">
