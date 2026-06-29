@@ -7,14 +7,14 @@ const saved = localStorage.getItem('mavish_user');
 // ─── Thunks ──────────────────────────────────────────────────────────────────
 export const registerUser = createAsyncThunk('auth/register', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/register`, data);
+    const res = await api.post(`/auth/register`, data);
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Registration failed'); }
 });
 
 export const verifyEmail = createAsyncThunk('auth/verifyEmail', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/verify-email`, data);
+    const res = await api.post(`/auth/verify-email`, data);
     localStorage.setItem('mavish_user', JSON.stringify(res.data));
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Verification failed'); }
@@ -22,14 +22,14 @@ export const verifyEmail = createAsyncThunk('auth/verifyEmail', async (data, { r
 
 export const resendOtp = createAsyncThunk('auth/resendOtp', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/resend-otp`, data);
+    const res = await api.post(`/auth/resend-otp`, data);
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Resend failed'); }
 });
 
 export const loginUser = createAsyncThunk('auth/login', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/login`, data);
+    const res = await api.post(`/auth/login`, data);
     localStorage.setItem('mavish_user', JSON.stringify(res.data));
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data); }
@@ -37,7 +37,7 @@ export const loginUser = createAsyncThunk('auth/login', async (data, { rejectWit
 
 export const googleLogin = createAsyncThunk('auth/google', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/google`, data);
+    const res = await api.post(`/auth/google`, data);
     localStorage.setItem('mavish_user', JSON.stringify(res.data));
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Google login failed'); }
@@ -45,21 +45,21 @@ export const googleLogin = createAsyncThunk('auth/google', async (data, { reject
 
 export const forgotPassword = createAsyncThunk('auth/forgotPassword', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/forgot-password`, data);
+    const res = await api.post(`/auth/forgot-password`, data);
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Request failed'); }
 });
 
 export const verifyResetOtp = createAsyncThunk('auth/verifyResetOtp', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/verify-reset-otp`, data);
+    const res = await api.post(`/auth/verify-reset-otp`, data);
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'OTP invalid'); }
 });
 
 export const resetPassword = createAsyncThunk('auth/resetPassword', async (data, { rejectWithValue }) => {
   try {
-    const res = await axios.post(`/auth/reset-password`, data);
+    const res = await api.post(`/auth/reset-password`, data);
     return res.data;
   } catch (err) { return rejectWithValue(err.response?.data?.message || 'Reset failed'); }
 });
