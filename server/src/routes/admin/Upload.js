@@ -1,5 +1,5 @@
 import express from "express";
-import { upload } from "../../utils/upload.js";
+import { upload } from "../../utils/Upload.js";
 import { uploadImage } from "../../controller/uploadController.js";
 import { protect, adminOnly } from "../../middleware/auth.js";
 

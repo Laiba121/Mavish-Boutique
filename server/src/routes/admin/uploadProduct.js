@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadProduct } from "../../utils/upload.js";
+import { uploadProduct } from "../../utils/Upload.js";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js";
 import { protect, adminOnly } from "../../middleware/auth.js";
 

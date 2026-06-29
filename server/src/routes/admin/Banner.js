@@ -7,7 +7,7 @@ import {
 } from "../../controller/bannerController.js";
 
 import { protect, adminOnly } from "../../middleware/auth.js";
-import { uploadBanner } from "../../utils/upload.js"; // ✅ FIXED
+import { uploadBanner } from "../../utils/Upload.js"; // ✅ FIXED
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js"; // ✅ ADD
 
 const router = express.Router();

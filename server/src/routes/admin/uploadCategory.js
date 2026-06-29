@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadCategory } from "../../utils/upload.js";
+import { uploadCategory } from "../../utils/Upload.js";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js";
 import { protect, adminOnly } from "../../middleware/auth.js";
 
