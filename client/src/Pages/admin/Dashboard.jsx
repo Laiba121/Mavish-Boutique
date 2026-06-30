@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../../components/admin/Sidebar';
 import Topbar from '../../components/admin/Topbar';
 import api from '../../utils/api';
+
 
 const STATUS_COLOR = {
   confirmed:  { bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500' },
@@ -278,7 +280,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-800">Recent Orders</h2>
-              <a href="/admin/orders" className="text-xs text-[#2b3a7a] font-semibold hover:underline">View all →</a>
+<Link to="/admin/orders" className="text-xs text-[#2b3a7a] font-semibold hover:underline">View all →</Link>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
