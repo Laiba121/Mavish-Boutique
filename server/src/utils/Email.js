@@ -1,15 +1,6 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const createTransporter = () => {
-  // Use Gmail SMTP. For production, swap with SendGrid/Mailgun/SES.
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,   // Gmail App Password (not account password)
-    },
-  });
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const brandColor = '#b5836a';
 const logoHtml = `<span style="font-family:Georgia,serif;font-size:22px;color:${brandColor};font-weight:700;letter-spacing:2px;">Mehrma Boutique</span>`;
@@ -22,13 +13,10 @@ const wrapper = (body) => `
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf7f2;padding:40px 20px;">
     <tr><td align="center">
       <table width="560" style="background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.07);">
-        <!-- Header -->
         <tr><td style="background:#2c2c2c;padding:28px 40px;text-align:center;">${logoHtml}</td></tr>
-        <!-- Body -->
         <tr><td style="padding:40px;">
           ${body}
         </td></tr>
-        <!-- Footer -->
         <tr><td style="background:#f5f0eb;padding:20px 40px;text-align:center;">
           <p style="margin:0;font-size:12px;color:#888;">© ${new Date().getFullYear()} Mehrma Boutique. All rights reserved.</p>
           <p style="margin:6px 0 0;font-size:12px;color:#888;">15-Km, Hafizabad Road, Gujranwala</p>
@@ -52,17 +40,19 @@ export const sendVerificationEmail = async (email, name, otp) => {
     <p style="color:#888;font-size:13px;">If you didn't create an account, you can safely ignore this email.</p>
   `);
 
- const transporter = createTransporter();
-
-await transporter.verify();
-console.log("SMTP Connected");
-
-  await transporter.sendMail({
-    from: `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
+  const { data, error } = await resend.emails.send({
+    from: process.env.RESEND_FROM,
     to: email,
     subject: 'Verify Your Email – Mavish Boutique',
     html,
   });
+
+  if (error) {
+    console.error('Resend error:', error);
+    throw new Error(error.message || 'Failed to send verification email');
+  }
+
+  console.log('Email sent:', data?.id);
 };
 
 export const sendPasswordResetEmail = async (email, name, otp) => {
@@ -78,15 +68,17 @@ export const sendPasswordResetEmail = async (email, name, otp) => {
     <p style="color:#888;font-size:13px;">If you didn't request this, please ignore this email. Your account is safe.</p>
   `);
 
- const transporter = createTransporter();
-
-await transporter.verify();
-
-console.log("SMTP Connected");
-  await transporter.sendMail({
-    from: `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
+  const { data, error } = await resend.emails.send({
+    from: process.env.RESEND_FROM,
     to: email,
     subject: 'Password Reset OTP – Mavish Boutique',
     html,
   });
+
+  if (error) {
+    console.error('Resend error:', error);
+    throw new Error(error.message || 'Failed to send password reset email');
+  }
+
+  console.log('Email sent:', data?.id);
 };
