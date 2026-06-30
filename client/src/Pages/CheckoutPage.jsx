@@ -10,7 +10,7 @@ const BANK_ACCOUNT = import.meta.env.VITE_BANK_ACCOUNT_NUMBER    || '5611-182300
 const BANK_IBAN    = import.meta.env.VITE_BANK_IBAN              || 'PK63BAHL561118230024461';
 const EASYPAISA_NAME = import.meta.env.VITE_EASYPAISA_NAME || 'Mehrma Boutique';
 const EASYPAISA_ACCOUNT = import.meta.env.VITE_EASYPAISA_ACCOUNT || '03001234567';
-const API_URL      = import.meta.env.VITE_API_URL                || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL.replace(/\/$/, "");
 
 function detectBrand(n) {
   const s = n.replace(/\s/g, '');
@@ -195,12 +195,12 @@ export default function CheckoutPage() {
       if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
       if (user?._id)   headers['x-user-id']     = user._id;
 
-      const res = await fetch(`${API_URL}checkout`, { 
-        method: 'POST', 
-        headers, 
-        credentials: 'include', 
-        body: formData 
-      });
+    const res = await fetch(`${API_URL}checkout`, {
+  method: "POST",
+  headers,
+  credentials: "include",
+  body: formData,
+});
 
       const data = await res.json();
 
