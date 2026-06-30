@@ -64,7 +64,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="flex items-center gap-3">
           <img
-            src="/images/logo.avif"
+            src="/images/logo1.png"
             alt="Logo"
             className="w-10 h-10 rounded-full object-cover border border-gray-300"
           />

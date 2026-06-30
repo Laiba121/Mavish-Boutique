@@ -6,11 +6,11 @@ const TICKER_CSS = `
 .ticker-wrap { overflow: hidden; white-space: nowrap; }
 .ticker-inner {
   display: inline-block;
-  animation: ticker-scroll 40s linear infinite;
+  animation: ticker-scroll 80s linear infinite;
 }
 `;
 
-const seg = "Standard delivery time: 4-5 weeks | For international queries/orders, please WhatsApp us at +92 300 8462848   |    ";
+const seg = "Standard delivery time: 15-20 Days | For international queries/orders, please WhatsApp us at +92 300 8462848   |    ";
 
 export default function AnnouncementBar() {
   return (

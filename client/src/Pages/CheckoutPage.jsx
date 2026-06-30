@@ -9,7 +9,7 @@ const BANK_TITLE   = import.meta.env.VITE_BANK_ACCOUNT_TITLE     || 'Mahwish lat
 const BANK_ACCOUNT = import.meta.env.VITE_BANK_ACCOUNT_NUMBER    || '5611-1823002446-011';
 const BANK_IBAN    = import.meta.env.VITE_BANK_IBAN              || 'PK63BAHL561118230024461';
 const EASYPAISA_NAME = import.meta.env.VITE_EASYPAISA_NAME || 'Mehrma Boutique';
-const EASYPAISA_ACCOUNT = import.meta.env.VITE_EASYPAISA_ACCOUNT || '03001234567';
+const EASYPAISA_ACCOUNT = import.meta.env.VITE_EASYPAISA_ACCOUNT || '03008462848';
 const API_URL      = import.meta.env.VITE_API_URL                || 'http://localhost:5000/api';
 
 function detectBrand(n) {
