@@ -318,7 +318,7 @@ export default function CheckoutPage() {
                   </div>
                   <span className="text-sm text-gray-800">Standard</span>
                 </div>
-                <span className="text-sm font-semibold text-gray-800">Rs 380.00</span>
+                <span className="text-sm font-semibold text-gray-800">Rs 200.00</span>
               </div>
             </section>
 
