@@ -29,8 +29,7 @@ const wrapper = (body) => `
         <tr><td style="padding:40px;">${body}</td></tr>
         <tr>
           <td style="background:#f5f0eb;padding:20px 40px;text-align:center;">
-            <p style="margin:0;font-size:12px;color:#888;">© ${new Date().getFullYear()} Mehrma Boutique. All rights reserved.</p>
-            <p style="margin:6px 0 0;font-size:12px;color:#888;">15-Km, Hafizabad Road, Gujranwala</p>
+            <p style="margin:0;font-size:12px;color:#888;">© ${new Date().getFullYear()} Mavish Boutique. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -48,14 +47,12 @@ function advanceMethodLabel(method) {
 function advanceInstructions(order) {
   const amt = order.advanceAmount?.toLocaleString() ?? '—';
 
-  const easypaisaNumber = process.env.EASYPAISA_NUMBER || '0300-XXXXXXX';
-  const easypaisaName   = process.env.EASYPAISA_NAME   || 'Mehrma Boutique';
-  const jazzcashNumber  = process.env.JAZZCASH_NUMBER  || '0300-XXXXXXX';
-  const jazzcashName    = process.env.JAZZCASH_NAME    || 'Mehrma Boutique';
+  const easypaisaNumber = process.env.EASYPAISA_NUMBER;
+  const easypaisaName   = process.env.EASYPAISA_NAME   || 'Mavish Boutique';
   const bankName        = process.env.BANK_NAME        || 'HBL';
-  const bankTitle       = process.env.BANK_ACCOUNT_TITLE  || 'Mehrma Boutique';
-  const bankAccount     = process.env.BANK_ACCOUNT_NUMBER || '0123-4567890-001';
-  const bankIban        = process.env.BANK_IBAN           || 'PK36HABB0000000000000000';
+  const bankTitle       = process.env.BANK_ACCOUNT_TITLE  || 'Mavish Boutique';
+  const bankAccount     = process.env.BANK_ACCOUNT_NUMBER;
+  const bankIban        = process.env.BANK_IBAN;
 
   if (order.advanceMethod === 'card') {
     return `
@@ -86,8 +83,8 @@ function advanceInstructions(order) {
         <strong>JazzCash – Advance Payment Required</strong><br/>
         Please send <strong>Rs ${amt}.00</strong> to our JazzCash account:<br/>
         <br/>
-        📱 <strong>Number:</strong> ${jazzcashNumber}<br/>
-        👤 <strong>Account Name:</strong> ${jazzcashName}<br/>
+        📱 <strong>Number:</strong> ${easypaisaNumber}<br/>
+        👤 <strong>Account Name:</strong> ${easypaisaName}<br/>
         <br/>
         Use <strong>${order.orderNumber}</strong> as the description / reference.<br/>
         Your order ships once we confirm receipt.
@@ -199,7 +196,7 @@ export async function sendOrderConfirmation(order) {
 
   const transporter = createTransporter();
   await transporter.sendMail({
-    from:    `"Mehrma Boutique" <${process.env.EMAIL_USER}>`,
+    from:    `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
     to:      order.email,
     subject: `Order Confirmed – ${order.orderNumber}`,
     html,
@@ -213,9 +210,9 @@ export async function sendOrderConfirmation(order) {
  */
 export async function sendBankDepositAlert(order) {
   const bankName    = process.env.BANK_NAME           || 'HBL';
-  const bankTitle   = process.env.BANK_ACCOUNT_TITLE  || 'Mehrma Boutique';
-  const bankAccount = process.env.BANK_ACCOUNT_NUMBER || '0123-4567890-001';
-  const bankIban    = process.env.BANK_IBAN            || 'PK36HABB0000000000000000';
+  const bankTitle   = process.env.BANK_ACCOUNT_TITLE  || 'Mavish Boutique';
+  const bankAccount = process.env.BANK_ACCOUNT_NUMBER;
+  const bankIban    = process.env.BANK_IBAN;
   const adminEmail  = process.env.ADMIN_EMAIL          || process.env.EMAIL_USER;
 
   const advanceAmt = order.advanceAmount?.toLocaleString() ?? '—';
@@ -345,7 +342,7 @@ export async function sendBankDepositAlert(order) {
 
   const transporter = createTransporter();
   await transporter.sendMail({
-    from:    `"Mehrma Boutique" <${process.env.EMAIL_USER}>`,
+    from:    `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
     to:      adminEmail,
     subject: `⚠️ Bank Deposit Pending – ${order.orderNumber} (Rs ${advanceAmt}.00)`,
     html,

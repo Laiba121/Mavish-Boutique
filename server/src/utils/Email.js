@@ -54,9 +54,9 @@ export const sendVerificationEmail = async (email, name, otp) => {
 
   const transporter = createTransporter();
   await transporter.sendMail({
-    from: `"Mehrma Boutique" <${process.env.EMAIL_USER}>`,
+    from: `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Verify Your Email – Mehrma Boutique',
+    subject: 'Verify Your Email – Mavish Boutique',
     html,
   });
 };
@@ -76,9 +76,9 @@ export const sendPasswordResetEmail = async (email, name, otp) => {
 
   const transporter = createTransporter();
   await transporter.sendMail({
-    from: `"Mehrma Boutique" <${process.env.EMAIL_USER}>`,
+    from: `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: 'Password Reset OTP – Mehrma Boutique',
+    subject: 'Password Reset OTP – Mavish Boutique',
     html,
   });
 };
