@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Package, ChevronRight, Search, ShoppingBag } from 'lucide-react';
+import api from "../utils/api";
 
 // ── Status badge config ───────────────────────────────────────────────────────
 const STATUS_BADGE = {
@@ -55,45 +56,43 @@ export default function MyOrdersPage() {
   async function fetchOrders() {
     try {
       const authToken = user?.token || user?.accessToken;
-      const guestEmail = localStorage.getItem('guestEmail');
+      const guestEmail = localStorage.getItem("guestEmail");
 
-      let url = 'http://localhost:5000/api/checkout/orders/my';
-      const headers = {};
-
-      // ✅ STEP 1: If user just logged in → attach guest orders
+      // Attach guest orders after login
       if (authToken && guestEmail) {
-        await fetch('http://localhost:5000/api/checkout/attach-guest-orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ email: guestEmail }),
+        await api.post("checkout/attach-guest-orders", {
+          email: guestEmail,
         });
 
-        // optional: clear guest email after linking
-        localStorage.removeItem('guestEmail');
+        localStorage.removeItem("guestEmail");
       }
 
-      // ✅ STEP 2: Logged-in user
+      let response;
+
+      // Logged-in user
       if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+        response = await api.get("checkout/orders/my");
+      }
+      // Guest user
+      else if (guestEmail) {
+        response = await api.get("checkout/orders/my", {
+          params: {
+            email: guestEmail,
+          },
+        });
+      }
+      // Neither logged in nor guest email
+      else {
+        setOrders([]);
+        setLoading(false);
+        return;
       }
 
-      // ✅ STEP 3: Guest user
-      if (!authToken && guestEmail) {
-        url += `?email=${encodeURIComponent(guestEmail)}`;
-      }
-
-      const res = await fetch(url, { headers });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message);
-
-      setOrders(Array.isArray(data) ? data : []);
-
+      setOrders(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
-      setError(err.message || 'Failed to load orders');
+      setError(
+        err.response?.data?.message || "Failed to load orders"
+      );
     } finally {
       setLoading(false);
     }

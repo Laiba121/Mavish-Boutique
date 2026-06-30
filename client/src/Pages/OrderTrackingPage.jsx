@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Package, CheckCircle, Truck, MapPin, Clock, XCircle } from 'lucide-react';
+import api from "../utils/api";
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STEPS = [
@@ -46,20 +47,21 @@ export default function OrderTrackingPage() {
     setLoading(true);
 
     try {
-      const res  = await fetch(`/api/checkout/track?q=${encodeURIComponent(q)}`, { credentials: 'include' });
-      const data = await res.json();
+  const { data } = await api.get("checkout/track", {
+    params: {
+      q: query.trim(),
+    },
+  });
 
-      if (!res.ok) {
-        setError(data.message || 'Order not found. Please check your order number or email.');
-        setLoading(false);
-        return;
-      }
-      setOrder(data);
-    } catch {
-      setError('Network error. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
-    }
+  setOrder(data);
+} catch (err) {
+  setError(
+    err.response?.data?.message ||
+    "Order not found. Please check your order number or email."
+  );
+} finally {
+  setLoading(false);
+}
   }
 
   const stepIndex    = order ? (STEP_INDEX[order.status] ?? -1) : -1;

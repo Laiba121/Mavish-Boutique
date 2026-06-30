@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { CheckCircle, Package, Mail } from 'lucide-react';
+import api from "../utils/api";
 
 export default function OrderConfirmationPage() {
   const { id }                       = useParams();
@@ -9,21 +10,22 @@ export default function OrderConfirmationPage() {
   const [loading, setLoading]        = useState(true);
   const [error, setError]            = useState('');
 
-  useEffect(() => {
-    async function fetchOrder() {
-      try {
-        const res  = await fetch(`/api/checkout/orders/${id}`, { credentials: 'include' });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
-        setOrder(data);
-      } catch (err) {
-        setError(err.message || 'Could not load order details.');
-      } finally {
-        setLoading(false);
-      }
+useEffect(() => {
+  async function fetchOrder() {
+    try {
+      const { data } = await api.get(`checkout/orders/${id}`);
+      setOrder(data);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Could not load order details."
+      );
+    } finally {
+      setLoading(false);
     }
-    fetchOrder();
-  }, [id]);
+  }
+
+  fetchOrder();
+}, [id]);
 
   if (loading) {
     return (
