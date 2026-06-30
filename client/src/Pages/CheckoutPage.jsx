@@ -69,7 +69,7 @@ export default function CheckoutPage() {
     const price = i.isSale && i.salePrice ? i.salePrice : i.price;
     return sum + price * i.quantity;
   }, 0);
-  const shipping = subtotal > 0 ? 380 : 0;
+  const shipping = subtotal > 0 ? 200 : 0;
   const total    = subtotal + shipping;
   const advance  = Math.ceil(total / 2);
   const cod      = total - advance;
