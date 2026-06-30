@@ -1,15 +1,8 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const brandColor = '#2b3a7a';
-
-const createTransporter = () =>
-  nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
 
 const wrapper = (body) => `
 <!DOCTYPE html>
@@ -138,7 +131,6 @@ export async function sendOrderConfirmation(order) {
     <p style="font-size:13px;color:#888;margin-bottom:2px;">Order number</p>
     <p style="font-size:18px;font-weight:700;color:${brandColor};margin:0 0 20px;">${order.orderNumber}</p>
 
-    <!-- Payment split summary -->
     <table width="100%" style="margin:0 0 8px;border-collapse:collapse;background:#f9f9fb;border-radius:4px;overflow:hidden;">
       <tr style="background:#2b3a7a;">
         <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
@@ -194,13 +186,19 @@ export async function sendOrderConfirmation(order) {
     </div>
   `);
 
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from:    `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
+  const { data, error } = await resend.emails.send({
+    from:    process.env.RESEND_FROM_ORDERS || `Mavish Boutique <orders@mavishboutique.com>`,
     to:      order.email,
     subject: `Order Confirmed – ${order.orderNumber}`,
     html,
   });
+
+  if (error) {
+    console.error('Resend error (order confirmation):', error);
+    throw new Error(error.message || 'Failed to send order confirmation email');
+  }
+
+  console.log('Order confirmation sent:', data?.id);
 }
 
 /**
@@ -213,7 +211,7 @@ export async function sendBankDepositAlert(order) {
   const bankTitle   = process.env.BANK_ACCOUNT_TITLE  || 'Mavish Boutique';
   const bankAccount = process.env.BANK_ACCOUNT_NUMBER;
   const bankIban    = process.env.BANK_IBAN;
-  const adminEmail  = process.env.ADMIN_EMAIL          || process.env.EMAIL_USER;
+  const adminEmail  = process.env.ADMIN_EMAIL;
 
   const advanceAmt = order.advanceAmount?.toLocaleString() ?? '—';
   const codAmt     = order.codAmount?.toLocaleString()     ?? '—';
@@ -236,18 +234,15 @@ export async function sendBankDepositAlert(order) {
       Please verify the deposit in your bank account, then mark the order as paid in the admin panel.
     </p>
 
-    <!-- Alert banner -->
     <div style="background:#fff8e1;border-left:4px solid #f0a500;padding:14px 16px;margin:20px 0;font-size:14px;color:#7a5c00;">
       <strong>Action required:</strong> Verify that <strong>Rs ${advanceAmt}.00</strong> has been transferred
       with reference <strong>${order.orderNumber}</strong>, then update payment status to
       <em>advance_confirmed</em>.
     </div>
 
-    <!-- Order info -->
     <p style="font-size:13px;color:#888;margin-bottom:2px;">Order number</p>
     <p style="font-size:18px;font-weight:700;color:${brandColor};margin:0 0 20px;">${order.orderNumber}</p>
 
-    <!-- Customer details -->
     <table width="100%" style="border-collapse:collapse;margin:0 0 20px;background:#f9f9fb;border-radius:4px;overflow:hidden;">
       <tr style="background:#2b3a7a;">
         <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
@@ -272,7 +267,6 @@ export async function sendBankDepositAlert(order) {
       </tr>
     </table>
 
-    <!-- Payment amounts -->
     <table width="100%" style="border-collapse:collapse;margin:0 0 20px;background:#f9f9fb;border-radius:4px;overflow:hidden;">
       <tr style="background:#2b3a7a;">
         <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
@@ -293,7 +287,6 @@ export async function sendBankDepositAlert(order) {
       </tr>
     </table>
 
-    <!-- Your bank details -->
     <table width="100%" style="border-collapse:collapse;margin:0 0 20px;background:#f9f9fb;border-radius:4px;overflow:hidden;">
       <tr style="background:#2b3a7a;">
         <td colspan="2" style="padding:10px 16px;font-size:12px;color:#fff;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
@@ -322,7 +315,6 @@ export async function sendBankDepositAlert(order) {
       </tr>
     </table>
 
-    <!-- Order items -->
     <table width="100%" style="border-collapse:collapse;margin:0 0 8px;">
       <thead>
         <tr style="background:#f5f5f5;">
@@ -340,11 +332,17 @@ export async function sendBankDepositAlert(order) {
     </p>
   `);
 
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from:    `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
+  const { data, error } = await resend.emails.send({
+    from:    process.env.RESEND_FROM_ORDERS || `Mavish Boutique <orders@mavishboutique.com>`,
     to:      adminEmail,
     subject: `⚠️ Bank Deposit Pending – ${order.orderNumber} (Rs ${advanceAmt}.00)`,
     html,
   });
+
+  if (error) {
+    console.error('Resend error (bank deposit alert):', error);
+    throw new Error(error.message || 'Failed to send bank deposit alert email');
+  }
+
+  console.log('Bank deposit alert sent:', data?.id);
 }
