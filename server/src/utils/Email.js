@@ -52,7 +52,11 @@ export const sendVerificationEmail = async (email, name, otp) => {
     <p style="color:#888;font-size:13px;">If you didn't create an account, you can safely ignore this email.</p>
   `);
 
-  const transporter = createTransporter();
+ const transporter = createTransporter();
+
+await transporter.verify();
+console.log("SMTP Connected");
+
   await transporter.sendMail({
     from: `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -74,7 +78,11 @@ export const sendPasswordResetEmail = async (email, name, otp) => {
     <p style="color:#888;font-size:13px;">If you didn't request this, please ignore this email. Your account is safe.</p>
   `);
 
-  const transporter = createTransporter();
+ const transporter = createTransporter();
+
+await transporter.verify();
+
+console.log("SMTP Connected");
   await transporter.sendMail({
     from: `"Mavish Boutique" <${process.env.EMAIL_USER}>`,
     to: email,
