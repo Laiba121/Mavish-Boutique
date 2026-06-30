@@ -195,7 +195,7 @@ export default function CheckoutPage() {
       if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
       if (user?._id)   headers['x-user-id']     = user._id;
 
-    const res = await fetch(`${API_URL}checkout`, {
+    const res = await fetch(`${API_URL}/checkout`, {
   method: "POST",
   headers,
   credentials: "include",
