@@ -22,6 +22,7 @@ import adminContact from './src/routes/admin/Contact.js'; // ✅ ADMIN CONTACT R
 import adminUsers from './src/routes/admin/User.js'; // ✅ ADMIN USER MANAGEMENT
 import sizeChartRoutes from './src/routes/sizeChartRoutes.js';
 import paymentRoutes from './src/routes/Payment.js';
+import sitemapRoutes from './src/routes/sitemap.js';
 
 
 
@@ -63,6 +64,8 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '10mb' }));
+
+app.use("/", sitemapRoutes);
 
 app.use('/uploads', express.static(uploadsDir));
 

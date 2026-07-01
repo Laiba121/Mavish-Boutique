@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mavishboutique.com/sitemap.xml
+Sitemap: https://www.mavishboutique.com/sitemap.xml
